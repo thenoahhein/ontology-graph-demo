@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import express, { type NextFunction, type Request, type Response } from 'express';
-import { CATALOG, getCatalog, type PricingCatalog } from './catalog.js';
+import { CATALOG, getCatalog, type PlanKey, type PricingCatalog } from './catalog.js';
 
 interface User { email: string; password: string; token: string; verified: boolean; createdAt: number; }
 interface Store { users: User[]; pricingVersion: string; }
@@ -27,6 +27,9 @@ function escapeHtml(value: string): string {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 }
+function escapeJsonScript(value: string): string {
+  return value.replaceAll('<', '\\u003c').replaceAll('>', '\\u003e').replaceAll('&', '\\u0026');
+}
 function html(title: string, body: string): string {
   return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title></head><body>${body}</body></html>`;
 }
@@ -43,18 +46,20 @@ function accountPage(email: string): string {
 }
 function dashboardPage(user: User): string {
   const catalog = getCatalog(store.pricingVersion);
-  const plan = catalog.plans.pro!;
-  const json = JSON.stringify({
-    plan: plan.name, monthlyPrice: plan.monthlyPrice, seatLimit: plan.seatLimit,
-    features: plan.features, pricingVersion: catalog.version,
-  });
+  const plans = (Object.keys(catalog.plans) as PlanKey[]).map((key) => ({
+    key, ...catalog.plans[key],
+  }));
+  const json = escapeJsonScript(JSON.stringify({ plans, pricingVersion: catalog.version }));
   return html('Acme Cloud dashboard', `<h1>Acme Cloud dashboard</h1>
     <p id="dashboard-email">${escapeHtml(user.email)}</p>
-    <section id="pro-plan"><h2 id="plan-name">${escapeHtml(plan.name)}</h2>
-    <p id="plan-price">$${plan.monthlyPrice}/month</p><p id="plan-seats">${plan.seatLimit} seats</p>
-    <ul id="plan-features">${plan.features.map((feature) => `<li>${escapeHtml(feature)}</li>`).join('')}</ul>
-    <p id="pricing-version">${escapeHtml(catalog.version)}</p></section>
-    <script type="application/json" id="plan-json">${escapeHtml(json)}</script>`);
+    ${plans.map((plan) => `<section id="plan-${plan.key}">
+      <h2 id="plan-${plan.key}-name">${escapeHtml(plan.name)}</h2>
+      <p id="plan-${plan.key}-price">$${plan.monthlyPrice}/month</p>
+      <p id="plan-${plan.key}-seats">${plan.seatLimit} seats</p>
+      <ul id="plan-${plan.key}-features">${plan.features.map((feature) => `<li>${escapeHtml(feature)}</li>`).join('')}</ul>
+    </section>`).join('')}
+    <p id="pricing-version">${escapeHtml(catalog.version)}</p>
+    <script type="application/json" id="plan-json">${json}</script>`);
 }
 async function persistStore(): Promise<void> {
   if (!persistenceEnabled) return;
@@ -146,9 +151,7 @@ app.post('/signup', async (req, res, next) => {
     store.users = store.users.filter((candidate) => candidate.email !== email);
     store.users.push(user);
     await persistStore();
-    const proto = req.header('x-forwarded-proto') ?? 'http';
-    const baseUrl = req.header('host')?.startsWith('127.0.0.1') ? publicBaseUrl : `${proto}://${req.header('host') ?? new URL(publicBaseUrl).host}`;
-    await sendVerification(email, `${baseUrl}/verify?token=${encodeURIComponent(user.token)}`);
+    await sendVerification(email, `${publicBaseUrl.replace(/\/$/, '')}/verify?token=${encodeURIComponent(user.token)}`);
     res.type('html').send(html('Check your email', `<h1 id="pending">Check your email</h1><p>${escapeHtml(email)}</p>`));
   } catch (error) { next(error); }
 });

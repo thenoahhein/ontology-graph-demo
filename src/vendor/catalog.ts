@@ -1,3 +1,6 @@
+export type PlanKey = 'starter' | 'pro';
+export type PricingVersion = 'v1' | 'v2';
+
 export interface PlanFacts {
   name: string;
   monthlyPrice: number;
@@ -6,9 +9,9 @@ export interface PlanFacts {
 }
 export interface PricingCatalog {
   version: string;
-  plans: Record<string, PlanFacts>;
+  plans: Record<PlanKey, PlanFacts>;
 }
-export const CATALOG: Record<string, PricingCatalog> = {
+export const CATALOG: Record<PricingVersion, PricingCatalog> = {
   v1: {
     version: 'v1',
     plans: {
@@ -25,5 +28,8 @@ export const CATALOG: Record<string, PricingCatalog> = {
   },
 };
 export function getCatalog(version: string): PricingCatalog {
-  return CATALOG[version] ?? CATALOG.v1!;
+  return isPricingVersion(version) ? CATALOG[version] : CATALOG.v1;
+}
+function isPricingVersion(value: string): value is PricingVersion {
+  return value === 'v1' || value === 'v2';
 }

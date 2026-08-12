@@ -114,6 +114,9 @@ export class AgentsteadClient {
       },
     });
   }
+  listCredentials(workspaceId: string): Promise<Credential[]> {
+    return this.requestEnvelope(`/v1/workspaces/${encodeURIComponent(workspaceId)}/credentials`);
+  }
   fillCredential(sessionId: string, credentialId: string, fills: CredentialFill[],
     submitSelector?: string, frameOrigin?: string): Promise<{ credential_id: string; session_id: string }> {
     return this.requestEnvelope(`/v1/browser-sessions/${encodeURIComponent(sessionId)}/credential-fills`, {
