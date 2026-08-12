@@ -1,6 +1,13 @@
 import { ZepClient, entityFields, type EdgeType, type EntityType } from '@getzep/zep-cloud';
 import type { Observation } from './observation.js';
 
+export class ZepSearchTimeoutError extends Error {
+  constructor(timeoutMs: number) {
+    super(`Zep search did not become ready within ${timeoutMs}ms`);
+    this.name = 'ZepSearchTimeoutError';
+  }
+}
+
 const entityTypes: Record<string, EntityType> = {
   Company: {
     description: 'A vendor company.',
@@ -110,7 +117,7 @@ export class ZepSink {
       await new Promise((resolve) => setTimeout(resolve, intervalMs));
       result = await this.search(query);
     }
-    if (!ready(result)) throw new Error(`Zep search did not become ready within ${timeoutMs}ms`);
+    if (!ready(result)) throw new ZepSearchTimeoutError(timeoutMs);
     return result;
   }
 

@@ -5,6 +5,7 @@ import { AgentsteadClient, type MailWaitResult } from '../agentstead/client.js';
 import type { Observation } from '../graph/observation.js';
 import { appendToSelectedSinks, selectSinks, type SinkMode } from '../graph/sink.js';
 import { FileSink } from '../graph/file-sink.js';
+import { ZepSearchTimeoutError } from '../graph/zep-sink.js';
 import { dashboardSelectors, parseDashboard } from './dashboard.js';
 
 interface LocalState {
@@ -189,12 +190,21 @@ async function diff(sinkModeOverride?: SinkMode): Promise<void> {
       if (sinks.remote) {
         const latest = observations[observations.length - 1];
         if (!latest) throw new Error('No observations available for Zep search');
-        const expectedFacts = latest.plans.map((plan) =>
-          `The ${plan.plan} plan costs $${plan.monthly_price} per month.`);
-        const result = await sinks.remote.waitForSearch(
-          'Acme Cloud',
-          (value) => hasZepFacts(value, expectedFacts),
-        );
+        const expectedFacts = latest.plans.map((plan) => ({
+          plan: plan.plan,
+          monthlyPrice: plan.monthly_price,
+        }));
+        let result: unknown;
+        try {
+          result = await sinks.remote.waitForSearch(
+            'Acme Cloud',
+            (value) => hasZepFacts(value, expectedFacts),
+          );
+        } catch (error) {
+          if (!(error instanceof ZepSearchTimeoutError)) throw error;
+          console.log('Zep is still processing; rendering the edges currently available.');
+          result = await sinks.remote.search('Acme Cloud');
+        }
         console.log('Zep search results:');
         printZepFacts(result);
       }
@@ -238,51 +248,39 @@ function printZepFacts(value: unknown): void {
   }
   const result = value as Record<string, unknown>;
   const edges = arrayValue(result.edges);
-  if (edges.length > 0) {
-    for (const candidate of edges) {
-      if (typeof candidate !== 'object' || candidate === null) {
-        console.log(`  ${JSON.stringify(candidate)}`);
-        continue;
-      }
-      const edge = candidate as Record<string, unknown>;
-      const fact = typeof edge.fact === 'string' ? edge.fact : typeof edge.name === 'string' ? edge.name : 'Zep edge';
-      const validAt = typeof edge.validAt === 'string' ? edge.validAt : 'unknown';
-      const invalidAt = typeof edge.invalidAt === 'string' ? edge.invalidAt : 'present';
-      const referenceTime = typeof edge.episode_reference_time === 'string'
-        ? ` episode_reference_time=${edge.episode_reference_time}`
-        : '';
-      console.log(`  ${fact} valid ${validAt} → ${invalidAt}${referenceTime}`);
-    }
+  if (edges.length === 0) {
+    console.log('  (no Zep edges returned yet)');
     return;
   }
-  const candidates = [...arrayValue(result.observations), ...arrayValue(result.nodes)];
-  if (candidates.length === 0) {
-    console.log(JSON.stringify(value));
-    return;
-  }
-  for (const candidate of candidates) {
+  for (const candidate of edges) {
     if (typeof candidate !== 'object' || candidate === null) {
-      console.log(JSON.stringify(candidate));
+      console.log(`  ${JSON.stringify(candidate)}`);
       continue;
     }
-    const fact = candidate as Record<string, unknown>;
-    const label = typeof fact.name === 'string' ? fact.name : typeof fact.summary === 'string' ? fact.summary : 'Zep fact';
-    const start = typeof fact.startAt === 'string' ? fact.startAt : 'unknown';
-    const end = typeof fact.endAt === 'string' ? fact.endAt : 'present';
-    const evidence = typeof fact.latestEvidenceAt === 'string' ? ` latest_evidence=${fact.latestEvidenceAt}` : '';
-    console.log(`  ${label} valid ${start} → ${end}${evidence}`);
+    const edge = candidate as Record<string, unknown>;
+    const fact = typeof edge.fact === 'string' ? edge.fact : typeof edge.name === 'string' ? edge.name : 'Zep edge';
+    const validAt = typeof edge.validAt === 'string' ? edge.validAt : 'unknown';
+    const invalidAt = typeof edge.invalidAt === 'string' ? edge.invalidAt : 'present';
+    const referenceTime = typeof edge.episode_reference_time === 'string'
+      ? ` episode_reference_time=${edge.episode_reference_time}`
+      : '';
+    console.log(`  ${fact} valid ${validAt} → ${invalidAt}${referenceTime}`);
   }
 }
 
-function hasZepFacts(value: unknown, expectedFacts: string[]): boolean {
+function hasZepFacts(value: unknown, expectedFacts: Array<{ plan: string; monthlyPrice: number }>): boolean {
   if (typeof value !== 'object' || value === null) return false;
   const edges = arrayValue((value as Record<string, unknown>).edges);
-  const facts = new Set(edges.flatMap((edge) => {
+  const facts = edges.flatMap((edge) => {
     if (typeof edge !== 'object' || edge === null) return [];
     const fact = (edge as Record<string, unknown>).fact;
-    return typeof fact === 'string' ? [fact] : [];
-  }));
-  return expectedFacts.every((fact) => facts.has(fact));
+    return typeof fact === 'string' ? [fact.toLowerCase()] : [];
+  });
+  return expectedFacts.every(({ plan, monthlyPrice }) => {
+    const planText = plan.toLowerCase();
+    const amountText = String(monthlyPrice);
+    return facts.some((fact) => fact.includes(planText) && fact.includes(amountText));
+  });
 }
 
 function arrayValue(value: unknown): unknown[] {

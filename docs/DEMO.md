@@ -137,6 +137,13 @@ the sink creates the graph if necessary, sets the declared ontology, and calls
 timestamp. The local JSONL ledger is still written first and remains the
 source for `diff`.
 
+Zep processes episodes and extracts graph facts asynchronously. `diff` polls
+for the expected price facts before rendering the search results; if the
+timeout expires, it prints a processing notice and renders whatever edges are
+available. When extending the ontology, avoid Zep-reserved field names such as
+`name`, `summary`, and `created_at`; this demo uses `company_name`,
+`product_name`, `plan_name`, and `feature_name` instead.
+
 `ZEP_GRAPH_VIEWER_URL` is optional. If your Zep deployment gives you a viewer
 URL template, set for example:
 
