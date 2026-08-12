@@ -4,19 +4,19 @@ import type { Observation } from './observation.js';
 const entityTypes: Record<string, EntityType> = {
   Company: {
     description: 'A vendor company.',
-    fields: { name: entityFields.text('The company name.') },
+    fields: { company_name: entityFields.text('The company name.') },
   },
   Product: {
     description: 'A product offered by a company.',
-    fields: { name: entityFields.text('The product name.') },
+    fields: { product_name: entityFields.text('The product name.') },
   },
   Plan: {
     description: 'A subscription plan.',
-    fields: { name: entityFields.text('The plan name.') },
+    fields: { plan_name: entityFields.text('The plan name.') },
   },
   Feature: {
     description: 'A plan feature.',
-    fields: { name: entityFields.text('The feature name.') },
+    fields: { feature_name: entityFields.text('The feature name.') },
   },
   Price: {
     description: 'A monthly plan price.',
@@ -96,6 +96,22 @@ export class ZepSink {
       scope: 'auto',
       returnRawResults: true,
     });
+  }
+
+  async waitForSearch(
+    query: string,
+    ready: (result: unknown) => boolean,
+    timeoutMs = 120_000,
+    intervalMs = 2_000,
+  ): Promise<unknown> {
+    const deadline = Date.now() + timeoutMs;
+    let result = await this.search(query);
+    while (!ready(result) && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+      result = await this.search(query);
+    }
+    if (!ready(result)) throw new Error(`Zep search did not become ready within ${timeoutMs}ms`);
+    return result;
   }
 
   private async ensureGraph(): Promise<void> {
