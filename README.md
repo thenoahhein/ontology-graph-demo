@@ -90,10 +90,11 @@ npm run diff
 
 ## Railway deployment
 
-The repository includes `railway.json`. Railway runs:
+The repository includes `railway.json`. Nixpacks installs dependencies, then
+Railway runs:
 
 ```text
-npm ci && npm run build
+npm run build
 npm start
 ```
 
