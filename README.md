@@ -15,15 +15,16 @@ owned by an [Agentstead](https://github.com/thenoahhein/agent-workspace) workspa
 
 ## Status
 
-Bootstrapping. This commit is a minimal deployable skeleton so Railway can detect the
-project; the demo is being built on top of it.
+Stage 1 includes the deployable Acme Cloud target app and a small typed Agentstead
+HTTP client. The temporal graph orchestrator and Zep/Graphiti integration are stage 2.
 
-## Layout (planned)
+## Layout
 
-- `src/vendor/` — the deterministic vendor target app: public pricing page, private
-  authenticated dashboard, two pricing versions, and an admin endpoint that flips versions.
-- `src/orchestrator/` — the research agent: Agentstead signup, email verification,
-  credential fill, dashboard read, evidence file, and Zep episode ingestion.
+- `src/vendor/catalog.ts` — versioned Starter and Pro pricing facts.
+- `src/vendor/server.ts` — Acme Cloud target app with signup, verification, dashboard,
+  persistent session, and guarded pricing-version switching.
+- `src/agentstead/client.ts` — minimal typed fetch client for the Agentstead API.
+- `src/orchestrator/` — stage 2: Agentstead signup, evidence capture, and graph ingestion.
 
 ## Local
 
@@ -33,3 +34,8 @@ npm run dev     # vendor target on http://localhost:3000
 ```
 
 `GET /healthz` is the Railway healthcheck.
+
+Copy `.env.example` to `.env` for local configuration. If `VENDOR_MAILBOX_ID` is
+unset and `AGENTMAIL_API_KEY` is available, the target creates a reusable AgentMail
+sender inbox at startup. The signup recipient should be an Agentstead workspace
+mailbox or another inbox available to the smoke-test operator.
