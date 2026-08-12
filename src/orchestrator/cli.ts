@@ -1,27 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { AgentsteadClient, type Credential, type MailWaitResult, type PageRead } from '../agentstead/client.js';
-import type { Observation, ObservedPlan } from '../graph/observation.js';
+import { AgentsteadClient, type MailWaitResult } from '../agentstead/client.js';
+import type { Observation } from '../graph/observation.js';
 import { appendToSelectedSinks, selectSinks, type SinkMode } from '../graph/sink.js';
 import { FileSink } from '../graph/file-sink.js';
+import { dashboardSelectors, parseDashboard } from './dashboard.js';
 
 interface LocalState {
   workspaceId: string;
   credentialId?: string;
   vendorBaseUrl: string;
   ledgerPath: string;
-}
-
-interface DashboardData {
-  plans: Array<{
-    key: string;
-    name: string;
-    monthlyPrice: number;
-    seatLimit: number;
-    features: string[];
-  }>;
-  pricingVersion: string;
 }
 
 const dataDir = process.env.DATA_DIR ?? './.data';
@@ -40,6 +30,7 @@ async function main(): Promise<void> {
   if (command === 'flip') await flip(flags.positionals[0]);
   if (command === 'diff') await diff(flags.sink);
   if (command === 'demo') {
+    await flip('v1');
     await observe(flags.sink);
     await flip('v2');
     await observe(flags.sink);
@@ -49,7 +40,7 @@ async function main(): Promise<void> {
 
 async function observe(sinkModeOverride?: SinkMode): Promise<void> {
   const state = await loadState();
-  const targetBaseUrl = state?.vendorBaseUrl ?? vendorBaseUrl;
+  const targetBaseUrl = resolveVendorBaseUrl(state);
   const workspace = state
     ? await client.getWorkspace(state.workspaceId)
     : await client.createWorkspace(`Living Vendor Graph ${new Date().toISOString()}`);
@@ -74,7 +65,7 @@ async function observe(sinkModeOverride?: SinkMode): Promise<void> {
         credentialId = existing.id;
         await login(session.id, credentialId, targetBaseUrl);
       } else {
-        credentialId = await signup(session.id, workspace.email, workspace.id, workspace.email, targetBaseUrl);
+        credentialId = await signup(session.id, workspace.email, workspace.id, targetBaseUrl);
       }
     }
     const dashboard = await client.navigatePage(session.id, `${targetBaseUrl}/dashboard`);
@@ -120,7 +111,7 @@ async function observe(sinkModeOverride?: SinkMode): Promise<void> {
   }
 }
 
-async function signup(sessionId: string, email: string, workspaceId: string, credentialUsername: string, targetBaseUrl: string): Promise<string> {
+async function signup(sessionId: string, email: string, workspaceId: string, targetBaseUrl: string): Promise<string> {
   const signupSecret = process.env.SIGNUP_SHARED_SECRET;
   if (!signupSecret) throw new Error('SIGNUP_SHARED_SECRET is required for the signup path');
   await client.navigatePage(sessionId, `${targetBaseUrl}/signup?secret=${encodeURIComponent(signupSecret)}`);
@@ -128,7 +119,7 @@ async function signup(sessionId: string, email: string, workspaceId: string, cre
   const credential = await client.createCredential(workspaceId, {
     label: `acme-cloud-${Date.now()}`,
     site: targetBaseUrl,
-    username: credentialUsername,
+    username: email,
     generate: true,
     secretLength: 24,
   });
@@ -158,7 +149,9 @@ async function flip(version: string | undefined): Promise<void> {
   if (version !== 'v1' && version !== 'v2') throw new Error('flip expects v1 or v2');
   const adminSecret = process.env.ADMIN_SECRET;
   if (!adminSecret) throw new Error('ADMIN_SECRET is required for flip');
-  const response = await fetch(`${vendorBaseUrl}/admin/pricing-version`, {
+  const state = await loadState();
+  const targetBaseUrl = resolveVendorBaseUrl(state);
+  const response = await fetch(`${targetBaseUrl}/admin/pricing-version`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-admin-secret': adminSecret },
     body: JSON.stringify({ version }),
@@ -203,34 +196,6 @@ async function diff(sinkModeOverride?: SinkMode): Promise<void> {
   }
 }
 
-function dashboardSelectors(): string[] {
-  return [
-    '#pricing-version', '#plan-json',
-    '#plan-starter-name', '#plan-starter-price', '#plan-starter-seats', '#plan-starter-features',
-    '#plan-pro-name', '#plan-pro-price', '#plan-pro-seats', '#plan-pro-features',
-  ];
-}
-
-function parseDashboard(read: PageRead): DashboardData {
-  const values = new Map(read.selectors.filter((selector) => selector.found).map((selector) => [selector.selector, selector.text ?? '']));
-  const json = values.get('#plan-json');
-  if (!json) throw new Error('Authenticated dashboard did not return #plan-json');
-  const parsed: unknown = JSON.parse(json);
-  if (!isDashboardData(parsed)) throw new Error('Dashboard JSON blob had an unexpected shape');
-  return parsed;
-}
-
-function isDashboardData(value: unknown): value is DashboardData {
-  if (typeof value !== 'object' || value === null) return false;
-  const record = value as Record<string, unknown>;
-  return typeof record.pricingVersion === 'string' && Array.isArray(record.plans) &&
-    record.plans.every((plan) => typeof plan === 'object' && plan !== null &&
-      typeof (plan as Record<string, unknown>).name === 'string' &&
-      typeof (plan as Record<string, unknown>).monthlyPrice === 'number' &&
-      typeof (plan as Record<string, unknown>).seatLimit === 'number' &&
-      Array.isArray((plan as Record<string, unknown>).features));
-}
-
 function mailFailure(mail: MailWaitResult): string {
   return mail.timed_out
     ? `Verification email timed out: ${JSON.stringify(mail.diagnostics)}`
@@ -253,6 +218,10 @@ function isMissingFile(error: unknown): boolean {
 }
 function formatDate(value: string): string {
   return value === 'present' ? value : value.slice(0, 10);
+}
+
+function resolveVendorBaseUrl(state: LocalState | undefined): string {
+  return state?.vendorBaseUrl ?? vendorBaseUrl;
 }
 
 function printZepFacts(value: unknown): void {
