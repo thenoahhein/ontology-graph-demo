@@ -11,9 +11,14 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/vendor/server.js",
     "dev": "tsx watch src/vendor/server.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "observe": "node dist/orchestrator/cli.js observe",
+    "flip": "node dist/orchestrator/cli.js flip",
+    "diff": "node dist/orchestrator/cli.js diff",
+    "demo": "node dist/orchestrator/cli.js demo"
   },
   "dependencies": {
+    "@getzep/zep-cloud": "3.26.0",
     "express": "4.21.2"
   },
   "devDependencies": {
