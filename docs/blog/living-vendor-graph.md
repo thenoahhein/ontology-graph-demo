@@ -110,7 +110,6 @@ curl -X POST "$VENDOR/admin/pricing-version" \
 
 It answers with the catalog it just switched to:
 
-
 ```json
 {"version":"v1","catalog":{"version":"v1","plans":{"starter":{"name":"Starter","monthlyPrice":19,
 "seatLimit":3,"features":["Shared workspace","Email support"]},"pro":{"name":"Pro","monthlyPrice":49,
