@@ -1,0 +1,672 @@
+{
+  "graphId": "a0d2cde3-354a-479c-b7b4-392150c6a892",
+  "capturedAt": "2026-08-16T02:41:45.764Z",
+  "edges": [
+    {
+      "uuid": "034c4c75-1a63-4966-bfcf-71919dea583f",
+      "graph_id": "",
+      "sourceNodeUuid": "10c268b8-2335-4fe7-80c4-f259a90c0897",
+      "targetNodeUuid": "e5a4dfe6-15e4-47d1-b11d-c452305e56ef",
+      "createdAt": "2026-08-16T02:27:44.161Z",
+      "score": 0.015625,
+      "name": "PRICING_VERSION",
+      "fact": "Acme Cloud has pricing version v2.",
+      "scope": "entity",
+      "episodes": [
+        "7a985154-9bee-43e0-bfa2-dc74ca4dbdf2",
+        "a39fae1d-e501-49a4-9334-aeedb92b5046"
+      ],
+      "validAt": "2026-08-16T02:22:34Z",
+      "attributes": {
+        "edge_type": "PRICING_VERSION",
+        "fact": "Acme Cloud has pricing version v2.",
+        "reference_time": "2026-08-16 02:22:34.013000+00:00"
+      },
+      "source_node_name": "Acme Cloud",
+      "target_node_name": "v2",
+      "source_node_labels": [
+        "Company"
+      ]
+    },
+    {
+      "uuid": "e2341660-a3fb-4953-addb-5fb14ea07fb6",
+      "graph_id": "",
+      "sourceNodeUuid": "10c268b8-2335-4fe7-80c4-f259a90c0897",
+      "targetNodeUuid": "59842cd3-6e18-4298-ae37-748c13a95630",
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.015151516,
+      "name": "HAS_PLAN",
+      "fact": "Acme Cloud has the Pro plan.",
+      "scope": "entity",
+      "episodes": [
+        "938caacf-5ee5-4f88-99b7-47087a205195",
+        "7a985154-9bee-43e0-bfa2-dc74ca4dbdf2",
+        "a39fae1d-e501-49a4-9334-aeedb92b5046"
+      ],
+      "validAt": "2026-08-16T02:22:18.501Z",
+      "attributes": {
+        "edge_type": "HAS_PLAN",
+        "fact": "Acme Cloud has the Pro plan.",
+        "reference_time": "2026-08-16 02:22:18.501000+00:00"
+      },
+      "source_node_name": "Acme Cloud",
+      "target_node_name": "Pro",
+      "source_node_labels": [
+        "Company"
+      ],
+      "target_node_labels": [
+        "Plan"
+      ]
+    },
+    {
+      "uuid": "9ef49d1c-7bd9-469a-91d3-d8f1a6698402",
+      "graph_id": "",
+      "sourceNodeUuid": "10c268b8-2335-4fe7-80c4-f259a90c0897",
+      "targetNodeUuid": "5c0fef37-93df-486d-a7f1-65ee1bcc26ce",
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.014925373,
+      "name": "HAS_PLAN",
+      "fact": "Acme Cloud has the Starter plan.",
+      "scope": "entity",
+      "episodes": [
+        "938caacf-5ee5-4f88-99b7-47087a205195",
+        "7a985154-9bee-43e0-bfa2-dc74ca4dbdf2",
+        "a39fae1d-e501-49a4-9334-aeedb92b5046"
+      ],
+      "validAt": "2026-08-16T02:22:18.501Z",
+      "attributes": {
+        "edge_type": "HAS_PLAN",
+        "fact": "Acme Cloud has the Starter plan.",
+        "reference_time": "2026-08-16 02:22:18.501000+00:00"
+      },
+      "source_node_name": "Acme Cloud",
+      "target_node_name": "Starter",
+      "source_node_labels": [
+        "Company"
+      ],
+      "target_node_labels": [
+        "Plan"
+      ]
+    },
+    {
+      "uuid": "bd535868-403b-4bb6-a7f7-e7bba6e4bbfe",
+      "graph_id": "",
+      "sourceNodeUuid": "10c268b8-2335-4fe7-80c4-f259a90c0897",
+      "targetNodeUuid": "ecccde1c-6de9-498c-8ec6-4e1fd05d978d",
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.015384615,
+      "name": "PRICING_VERSION",
+      "fact": "The pricing version for Acme Cloud is v1.",
+      "scope": "entity",
+      "episodes": [
+        "938caacf-5ee5-4f88-99b7-47087a205195",
+        "7a985154-9bee-43e0-bfa2-dc74ca4dbdf2"
+      ],
+      "expiredAt": "2026-08-16T02:27:50.472Z",
+      "validAt": "2026-08-16T02:22:18.501Z",
+      "invalidAt": "2026-08-16T02:22:34Z",
+      "attributes": {
+        "edge_type": "PRICING_VERSION",
+        "fact": "The pricing version for Acme Cloud is v1.",
+        "reference_time": "2026-08-16 02:22:18.501000+00:00"
+      },
+      "source_node_name": "Acme Cloud",
+      "target_node_name": "v1",
+      "source_node_labels": [
+        "Company"
+      ]
+    },
+    {
+      "uuid": "bed09aff-3c51-49e4-a5c3-338a012d9054",
+      "graph_id": "",
+      "sourceNodeUuid": "59842cd3-6e18-4298-ae37-748c13a95630",
+      "targetNodeUuid": "af473d2d-af8c-41d5-9c82-1e0defce7deb",
+      "createdAt": "2026-08-16T02:27:44.161Z",
+      "score": 0.014084507,
+      "name": "HAS_FEATURE",
+      "fact": "The Pro plan includes SCIM.",
+      "scope": "entity",
+      "episodes": [
+        "7a985154-9bee-43e0-bfa2-dc74ca4dbdf2",
+        "a39fae1d-e501-49a4-9334-aeedb92b5046"
+      ],
+      "validAt": "2026-08-16T02:22:34Z",
+      "attributes": {
+        "edge_type": "HAS_FEATURE",
+        "fact": "The Pro plan includes SCIM.",
+        "reference_time": "2026-08-16 02:22:34.013000+00:00"
+      },
+      "source_node_name": "Pro",
+      "target_node_name": "SCIM",
+      "source_node_labels": [
+        "Plan"
+      ],
+      "target_node_labels": [
+        "Feature"
+      ]
+    },
+    {
+      "uuid": "8c639a6d-49e7-44cc-b37e-5dcd8ef382ab",
+      "graph_id": "",
+      "sourceNodeUuid": "5c0fef37-93df-486d-a7f1-65ee1bcc26ce",
+      "targetNodeUuid": "2036e347-86d2-4d76-aadc-0de306edbe32",
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.014285714,
+      "name": "HAS_FEATURE",
+      "fact": "The Starter plan includes the Shared workspace feature.",
+      "scope": "entity",
+      "episodes": [
+        "938caacf-5ee5-4f88-99b7-47087a205195",
+        "7a985154-9bee-43e0-bfa2-dc74ca4dbdf2",
+        "a39fae1d-e501-49a4-9334-aeedb92b5046"
+      ],
+      "validAt": "2026-08-16T02:22:18.501Z",
+      "attributes": {
+        "edge_type": "HAS_FEATURE",
+        "fact": "The Starter plan includes the Shared workspace feature.",
+        "reference_time": "2026-08-16 02:22:18.501000+00:00"
+      },
+      "source_node_name": "Starter",
+      "target_node_name": "Shared workspace",
+      "source_node_labels": [
+        "Plan"
+      ],
+      "target_node_labels": [
+        "Feature"
+      ]
+    },
+    {
+      "uuid": "6bcf632f-3d28-422a-8bcf-aee8dd68228a",
+      "graph_id": "",
+      "sourceNodeUuid": "5c0fef37-93df-486d-a7f1-65ee1bcc26ce",
+      "targetNodeUuid": "103caf3c-8116-4588-bced-77cf16c59ff0",
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.032002047,
+      "name": "HAS_PRICE",
+      "fact": "The Starter plan costs $19 per month.",
+      "scope": "entity",
+      "episodes": [
+        "938caacf-5ee5-4f88-99b7-47087a205195",
+        "7a985154-9bee-43e0-bfa2-dc74ca4dbdf2",
+        "a39fae1d-e501-49a4-9334-aeedb92b5046"
+      ],
+      "validAt": "2026-08-16T02:22:18.501Z",
+      "attributes": {
+        "edge_type": "HAS_PRICE",
+        "fact": "The Starter plan costs $19 per month.",
+        "reference_time": "2026-08-16 02:22:18.501000+00:00"
+      },
+      "source_node_name": "Starter",
+      "target_node_name": "$19",
+      "source_node_labels": [
+        "Plan"
+      ],
+      "target_node_labels": [
+        "Price"
+      ]
+    },
+    {
+      "uuid": "fba8bf50-16b1-4488-b3ee-66b90139e28a",
+      "graph_id": "",
+      "sourceNodeUuid": "59842cd3-6e18-4298-ae37-748c13a95630",
+      "targetNodeUuid": "da8cea30-9a0b-47a7-874e-c77511204fa8",
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.014492754,
+      "name": "HAS_FEATURE",
+      "fact": "The Pro plan includes SSO.",
+      "scope": "entity",
+      "episodes": [
+        "938caacf-5ee5-4f88-99b7-47087a205195",
+        "7a985154-9bee-43e0-bfa2-dc74ca4dbdf2",
+        "a39fae1d-e501-49a4-9334-aeedb92b5046"
+      ],
+      "validAt": "2026-08-16T02:22:18.501Z",
+      "attributes": {
+        "edge_type": "HAS_FEATURE",
+        "fact": "The Pro plan includes SSO.",
+        "reference_time": "2026-08-16 02:22:18.501000+00:00"
+      },
+      "source_node_name": "Pro",
+      "target_node_name": "SSO",
+      "source_node_labels": [
+        "Plan"
+      ],
+      "target_node_labels": [
+        "Feature"
+      ]
+    },
+    {
+      "uuid": "5a49f208-e56c-4695-9ac0-6b2d326c6b71",
+      "graph_id": "",
+      "sourceNodeUuid": "59842cd3-6e18-4298-ae37-748c13a95630",
+      "targetNodeUuid": "4cb51b88-2d76-4d95-b02b-7d9c76632c8a",
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.032002047,
+      "name": "HAS_PRICE",
+      "fact": "The Pro plan costs $49 per month.",
+      "scope": "entity",
+      "episodes": [
+        "938caacf-5ee5-4f88-99b7-47087a205195",
+        "7a985154-9bee-43e0-bfa2-dc74ca4dbdf2"
+      ],
+      "expiredAt": "2026-08-16T02:27:50.835Z",
+      "validAt": "2026-08-16T02:22:18.501Z",
+      "invalidAt": "2026-08-16T02:22:34Z",
+      "attributes": {
+        "edge_type": "HAS_PRICE",
+        "fact": "The Pro plan costs $49 per month.",
+        "reference_time": "2026-08-16 02:22:18.501000+00:00"
+      },
+      "source_node_name": "Pro",
+      "target_node_name": "$49",
+      "source_node_labels": [
+        "Plan"
+      ]
+    },
+    {
+      "uuid": "c63cfe93-098e-4f78-8f22-673aefb2e90c",
+      "graph_id": "",
+      "sourceNodeUuid": "5c0fef37-93df-486d-a7f1-65ee1bcc26ce",
+      "targetNodeUuid": "d31f2766-514a-42ae-8a4e-fc7682980a5b",
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.013513514,
+      "name": "HAS_FEATURE",
+      "fact": "The Starter plan includes Email support.",
+      "scope": "entity",
+      "episodes": [
+        "938caacf-5ee5-4f88-99b7-47087a205195",
+        "7a985154-9bee-43e0-bfa2-dc74ca4dbdf2",
+        "a39fae1d-e501-49a4-9334-aeedb92b5046"
+      ],
+      "validAt": "2026-08-16T02:22:18.501Z",
+      "attributes": {
+        "edge_type": "HAS_FEATURE",
+        "fact": "The Starter plan includes Email support.",
+        "reference_time": "2026-08-16 02:22:18.501000+00:00"
+      },
+      "source_node_name": "Starter",
+      "target_node_name": "Email support",
+      "source_node_labels": [
+        "Plan"
+      ],
+      "target_node_labels": [
+        "Feature"
+      ]
+    },
+    {
+      "uuid": "360d57fe-bb7b-44d5-80f9-f7c3686c955c",
+      "graph_id": "",
+      "sourceNodeUuid": "59842cd3-6e18-4298-ae37-748c13a95630",
+      "targetNodeUuid": "59796e91-0afc-4b73-841b-957be6511a26",
+      "createdAt": "2026-08-16T02:27:44.161Z",
+      "score": 0.032786883,
+      "name": "HAS_PRICE",
+      "fact": "The Pro plan costs $69 per month.",
+      "scope": "entity",
+      "episodes": [
+        "7a985154-9bee-43e0-bfa2-dc74ca4dbdf2",
+        "a39fae1d-e501-49a4-9334-aeedb92b5046"
+      ],
+      "validAt": "2026-08-16T02:22:34Z",
+      "attributes": {
+        "edge_type": "HAS_PRICE",
+        "fact": "The Pro plan costs $69 per month.",
+        "monthly_price": 69,
+        "reference_time": "2026-08-16 02:22:34.013000+00:00"
+      },
+      "source_node_name": "Pro",
+      "target_node_name": "$69",
+      "source_node_labels": [
+        "Plan"
+      ],
+      "target_node_labels": [
+        "Price"
+      ]
+    },
+    {
+      "uuid": "4dff5890-d670-4a45-98cc-250a1d460ef0",
+      "graph_id": "",
+      "sourceNodeUuid": "59842cd3-6e18-4298-ae37-748c13a95630",
+      "targetNodeUuid": "55185dc0-2e8f-434a-95a7-eda2cb181a2a",
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.014705882,
+      "name": "HAS_FEATURE",
+      "fact": "The Pro plan includes Audit log.",
+      "scope": "entity",
+      "episodes": [
+        "938caacf-5ee5-4f88-99b7-47087a205195",
+        "7a985154-9bee-43e0-bfa2-dc74ca4dbdf2",
+        "a39fae1d-e501-49a4-9334-aeedb92b5046"
+      ],
+      "validAt": "2026-08-16T02:22:18.501Z",
+      "attributes": {
+        "edge_type": "HAS_FEATURE",
+        "fact": "The Pro plan includes Audit log.",
+        "reference_time": "2026-08-16 02:22:18.501000+00:00"
+      },
+      "source_node_name": "Pro",
+      "target_node_name": "Audit log",
+      "source_node_labels": [
+        "Plan"
+      ],
+      "target_node_labels": [
+        "Feature"
+      ]
+    },
+    {
+      "uuid": "d2230ad7-13ab-4089-9d17-f773f98b6d67",
+      "graph_id": "",
+      "sourceNodeUuid": "59842cd3-6e18-4298-ae37-748c13a95630",
+      "targetNodeUuid": "c7dcf546-853f-4330-9392-f3a37c117e62",
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.013888889,
+      "name": "HAS_SEAT_LIMIT",
+      "fact": "The Pro plan has a seat limit of 5.",
+      "scope": "entity",
+      "episodes": [
+        "938caacf-5ee5-4f88-99b7-47087a205195"
+      ],
+      "validAt": "2026-08-16T02:22:18.501Z",
+      "attributes": {
+        "edge_type": "HAS_SEAT_LIMIT",
+        "fact": "The Pro plan has a seat limit of 5.",
+        "reference_time": "2026-08-16 02:22:18.501000+00:00"
+      },
+      "source_node_name": "Pro",
+      "target_node_name": "5",
+      "source_node_labels": [
+        "Plan"
+      ]
+    },
+    {
+      "uuid": "e62f99f2-080d-4123-a93e-499b664dd180",
+      "graph_id": "",
+      "sourceNodeUuid": "5c0fef37-93df-486d-a7f1-65ee1bcc26ce",
+      "targetNodeUuid": "885881e6-ccb7-40d5-8d2d-7cced7bbbaac",
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.01369863,
+      "name": "HAS_SEAT_LIMIT",
+      "fact": "The Starter plan has a seat limit of 3.",
+      "scope": "entity",
+      "episodes": [
+        "938caacf-5ee5-4f88-99b7-47087a205195"
+      ],
+      "validAt": "2026-08-16T02:22:18.501Z",
+      "attributes": {
+        "edge_type": "HAS_SEAT_LIMIT",
+        "fact": "The Starter plan has a seat limit of 3.",
+        "reference_time": "2026-08-16 02:22:18.501000+00:00"
+      },
+      "source_node_name": "Starter",
+      "target_node_name": "3",
+      "source_node_labels": [
+        "Plan"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "uuid": "10c268b8-2335-4fe7-80c4-f259a90c0897",
+      "name": "Acme Cloud",
+      "graph_id": "",
+      "labels": [
+        "Company"
+      ],
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.03076923,
+      "summary": "Acme Cloud offers a product named Acme Cloud with pricing version v1. The Starter plan costs $19 per month, includes a seat limit of 3, and provides Shared workspace and Email support features. The Pro plan costs $49 per month, has a seat limit of 5, and includes SSO and Audit log features.",
+      "attributes": {
+        "company_name": "Acme Cloud",
+        "name": "Acme Cloud"
+      }
+    },
+    {
+      "uuid": "ecccde1c-6de9-498c-8ec6-4e1fd05d978d",
+      "name": "v1",
+      "graph_id": "",
+      "labels": [],
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.014492754,
+      "summary": "v1 is the pricing version for Acme Cloud.",
+      "attributes": {
+        "name": "v1"
+      }
+    },
+    {
+      "uuid": "af473d2d-af8c-41d5-9c82-1e0defce7deb",
+      "name": "SCIM",
+      "graph_id": "",
+      "labels": [
+        "Feature"
+      ],
+      "createdAt": "2026-08-16T02:27:44.16Z",
+      "score": 0.01369863,
+      "summary": "SCIM is a feature included in the Pro plan.",
+      "attributes": {
+        "feature_name": "SCIM",
+        "name": "SCIM"
+      }
+    },
+    {
+      "uuid": "2036e347-86d2-4d76-aadc-0de306edbe32",
+      "name": "Shared workspace",
+      "graph_id": "",
+      "labels": [
+        "Feature"
+      ],
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.014925373,
+      "summary": "Shared workspace is a feature of the Starter plan.",
+      "attributes": {
+        "feature_name": "Shared workspace",
+        "name": "Shared workspace"
+      }
+    },
+    {
+      "uuid": "da8cea30-9a0b-47a7-874e-c77511204fa8",
+      "name": "SSO",
+      "graph_id": "",
+      "labels": [
+        "Feature"
+      ],
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.013333334,
+      "summary": "SSO is a feature of the Pro plan.",
+      "attributes": {
+        "feature_name": "SSO",
+        "name": "SSO"
+      }
+    },
+    {
+      "uuid": "e5a4dfe6-15e4-47d1-b11d-c452305e56ef",
+      "name": "v2",
+      "graph_id": "",
+      "labels": [],
+      "createdAt": "2026-08-16T02:27:44.16Z",
+      "score": 0.014285714,
+      "summary": "The pricing version is v2.",
+      "attributes": {
+        "name": "v2"
+      }
+    },
+    {
+      "uuid": "59842cd3-6e18-4298-ae37-748c13a95630",
+      "name": "Pro",
+      "graph_id": "",
+      "labels": [
+        "Plan"
+      ],
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.031544957,
+      "summary": "The Pro plan costs $49 per month and has a seat limit of 5. It includes SSO and Audit log features.",
+      "attributes": {
+        "name": "Pro",
+        "plan_name": "Pro"
+      }
+    },
+    {
+      "uuid": "d31f2766-514a-42ae-8a4e-fc7682980a5b",
+      "name": "Email support",
+      "graph_id": "",
+      "labels": [
+        "Feature"
+      ],
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.013888889,
+      "summary": "Email support is a feature of the Starter plan.",
+      "attributes": {
+        "feature_name": "Email support",
+        "name": "Email support"
+      }
+    },
+    {
+      "uuid": "55185dc0-2e8f-434a-95a7-eda2cb181a2a",
+      "name": "Audit log",
+      "graph_id": "",
+      "labels": [
+        "Feature"
+      ],
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.014705882,
+      "summary": "Audit log is a feature of the Pro plan.",
+      "attributes": {
+        "feature_name": "Audit log",
+        "name": "Audit log"
+      }
+    },
+    {
+      "uuid": "5c0fef37-93df-486d-a7f1-65ee1bcc26ce",
+      "name": "Starter",
+      "graph_id": "",
+      "labels": [
+        "Plan"
+      ],
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.03175403,
+      "summary": "The Starter plan costs $19 per month and includes a seat limit of 3. It features Shared workspace and Email support.",
+      "attributes": {
+        "name": "Starter",
+        "plan_name": "Starter"
+      }
+    },
+    {
+      "uuid": "103caf3c-8116-4588-bced-77cf16c59ff0",
+      "name": "$19",
+      "graph_id": "",
+      "labels": [
+        "Price"
+      ],
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.031544957,
+      "summary": "$19 is the monthly price for the Starter plan, which has a seat limit of 3 and includes Shared workspace and Email support.",
+      "attributes": {
+        "amount": 19,
+        "name": "$19"
+      }
+    },
+    {
+      "uuid": "59796e91-0afc-4b73-841b-957be6511a26",
+      "name": "$69",
+      "graph_id": "",
+      "labels": [
+        "Price"
+      ],
+      "createdAt": "2026-08-16T02:27:44.16Z",
+      "score": 0.030834913,
+      "summary": "The monthly price for the Pro plan is $69. This plan has a seat limit of 10 and includes features such as SSO, Audit log, and SCIM.",
+      "attributes": {
+        "amount": 69,
+        "name": "$69"
+      }
+    },
+    {
+      "uuid": "4cb51b88-2d76-4d95-b02b-7d9c76632c8a",
+      "name": "$49",
+      "graph_id": "",
+      "labels": [],
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.03079839,
+      "summary": "$49 is the monthly price for the Pro plan, which has a seat limit of 5 and includes SSO and Audit log features.",
+      "attributes": {
+        "name": "$49"
+      }
+    },
+    {
+      "uuid": "c7dcf546-853f-4330-9392-f3a37c117e62",
+      "name": "5",
+      "graph_id": "",
+      "labels": [],
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.029709507,
+      "summary": "5 is the seat limit for the Pro plan, which costs $49 per month and includes SSO and Audit log features.",
+      "attributes": {
+        "name": "5"
+      }
+    },
+    {
+      "uuid": "885881e6-ccb7-40d5-8d2d-7cced7bbbaac",
+      "name": "3",
+      "graph_id": "",
+      "labels": [],
+      "createdAt": "2026-08-16T02:22:41.058Z",
+      "score": 0.029386532,
+      "summary": "3 is the seat limit for the Starter plan, which costs $19 per month and includes Shared workspace and Email support.",
+      "attributes": {
+        "name": "3"
+      }
+    }
+  ],
+  "episodes": [
+    {
+      "score": 0.60516334,
+      "content": "{\"observed_at\":\"2026-08-16T02:22:18.501Z\",\"source\":{\"kind\":\"authenticated_page\",\"url\":\"https://ontology-graph-demo-production.up.railway.app/dashboard\",\"workspace_id\":\"a0d2cde3-354a-479c-b7b4-392150c6a892\",\"evidence_file_id\":\"8d288735-f022-482f-83a1-6919b5165f07\",\"screenshot_file_id\":\"31fa45c0-678e-461e-862a-a226b7335767\"},\"company\":\"Acme Cloud\",\"product\":\"Acme Cloud\",\"plans\":[{\"plan\":\"Starter\",\"monthly_price\":19,\"seat_limit\":3,\"features\":[\"Shared workspace\",\"Email support\"]},{\"plan\":\"Pro\",\"monthly_price\":49,\"seat_limit\":5,\"features\":[\"SSO\",\"Audit log\"]}],\"pricing_version\":\"v1\"}",
+      "uuid": "938caacf-5ee5-4f88-99b7-47087a205195",
+      "source": "json",
+      "sourceDescription": "Authenticated Acme Cloud pricing dashboard observation",
+      "createdAt": "2026-08-16T02:22:18.501Z",
+      "processed": true,
+      "session_id": null,
+      "metadata": {
+        "company": "Acme Cloud",
+        "evidence_file_id": "8d288735-f022-482f-83a1-6919b5165f07",
+        "pricing_version": "v1",
+        "product": "Acme Cloud",
+        "screenshot_file_id": "31fa45c0-678e-461e-862a-a226b7335767"
+      }
+    },
+    {
+      "score": 0.60128313,
+      "content": "{\"observed_at\":\"2026-08-16T02:22:34.013Z\",\"source\":{\"kind\":\"authenticated_page\",\"url\":\"https://ontology-graph-demo-production.up.railway.app/dashboard\",\"workspace_id\":\"a0d2cde3-354a-479c-b7b4-392150c6a892\",\"evidence_file_id\":\"42e438e2-299d-42e3-b20c-03af039b0a25\",\"screenshot_file_id\":\"a3db6186-162c-45cb-ba07-3e3db9631d89\"},\"company\":\"Acme Cloud\",\"product\":\"Acme Cloud\",\"plans\":[{\"plan\":\"Starter\",\"monthly_price\":19,\"seat_limit\":3,\"features\":[\"Shared workspace\",\"Email support\"]},{\"plan\":\"Pro\",\"monthly_price\":69,\"seat_limit\":10,\"features\":[\"SSO\",\"Audit log\",\"SCIM\"]}],\"pricing_version\":\"v2\"}",
+      "uuid": "7a985154-9bee-43e0-bfa2-dc74ca4dbdf2",
+      "source": "json",
+      "sourceDescription": "Authenticated Acme Cloud pricing dashboard observation",
+      "createdAt": "2026-08-16T02:22:34.013Z",
+      "processed": true,
+      "session_id": null,
+      "metadata": {
+        "company": "Acme Cloud",
+        "evidence_file_id": "42e438e2-299d-42e3-b20c-03af039b0a25",
+        "pricing_version": "v2",
+        "product": "Acme Cloud",
+        "screenshot_file_id": "a3db6186-162c-45cb-ba07-3e3db9631d89"
+      }
+    },
+    {
+      "score": 0.60128313,
+      "content": "{\"observed_at\":\"2026-08-16T02:22:34.013Z\",\"source\":{\"kind\":\"authenticated_page\",\"url\":\"https://ontology-graph-demo-production.up.railway.app/dashboard\",\"workspace_id\":\"a0d2cde3-354a-479c-b7b4-392150c6a892\",\"evidence_file_id\":\"42e438e2-299d-42e3-b20c-03af039b0a25\",\"screenshot_file_id\":\"a3db6186-162c-45cb-ba07-3e3db9631d89\"},\"company\":\"Acme Cloud\",\"product\":\"Acme Cloud\",\"plans\":[{\"plan\":\"Starter\",\"monthly_price\":19,\"seat_limit\":3,\"features\":[\"Shared workspace\",\"Email support\"]},{\"plan\":\"Pro\",\"monthly_price\":69,\"seat_limit\":10,\"features\":[\"SSO\",\"Audit log\",\"SCIM\"]}],\"pricing_version\":\"v2\"}",
+      "uuid": "a39fae1d-e501-49a4-9334-aeedb92b5046",
+      "source": "json",
+      "sourceDescription": "Authenticated Acme Cloud pricing dashboard observation",
+      "createdAt": "2026-08-16T02:22:34.013Z",
+      "processed": true,
+      "session_id": null,
+      "metadata": {
+        "company": "Acme Cloud",
+        "evidence_file_id": "42e438e2-299d-42e3-b20c-03af039b0a25",
+        "pricing_version": "v2",
+        "product": "Acme Cloud",
+        "screenshot_file_id": "a3db6186-162c-45cb-ba07-3e3db9631d89"
+      }
+    }
+  ]
+}
