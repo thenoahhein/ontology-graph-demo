@@ -114,4 +114,6 @@ redeploys.
 
 For the full local and hosted flow, see [`docs/DEMO.md`](docs/DEMO.md).
 
-For the technical walkthrough, see [`docs/blog/living-vendor-graph.md`](docs/blog/living-vendor-graph.md).
+For the technical walkthrough, see [`docs/blog/living-vendor-graph.md`](docs/blog/living-vendor-graph.md)
+or the [rendered HTML version](docs/blog/living-vendor-graph.html). Regenerate it with
+`npm run blog:view`.
