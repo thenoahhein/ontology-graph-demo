@@ -41,10 +41,16 @@ export function parseDashboard(read: PageRead): DashboardData {
     return visible;
   }
   if (!isDashboardData(parsed)) throw new Error('Dashboard JSON blob had an unexpected shape');
-  if (JSON.stringify(parsed) !== JSON.stringify(visible)) {
+  if (!dashboardDataMatches(parsed, visible)) {
     throw new Error('Dashboard JSON blob disagreed with visible plan selectors');
   }
-  return visible;
+  return {
+    pricingVersion: visible.pricingVersion,
+    plans: visible.plans.map((plan) => ({
+      ...plan,
+      features: parsed.plans.find((candidate) => candidate.key === plan.key)?.features ?? plan.features,
+    })),
+  };
 }
 
 function requiredText(
@@ -96,4 +102,20 @@ function isDashboardData(value: unknown): value is DashboardData {
       candidate.features.length > 0 &&
       candidate.features.every((feature) => typeof feature === 'string' && feature.length > 0);
   });
+}
+
+function dashboardDataMatches(left: DashboardData, right: DashboardData): boolean {
+  if (left.pricingVersion !== right.pricingVersion || left.plans.length !== right.plans.length) return false;
+  return right.plans.every((plan) => {
+    const candidate = left.plans.find((item) => item.key === plan.key);
+    return candidate !== undefined &&
+      candidate.name === plan.name &&
+      candidate.monthlyPrice === plan.monthlyPrice &&
+      candidate.seatLimit === plan.seatLimit &&
+      compactFeatures(candidate.features) === compactFeatures(plan.features);
+  });
+}
+
+function compactFeatures(features: string[]): string {
+  return features.join('').replace(/\s+/g, '').toLowerCase();
 }
