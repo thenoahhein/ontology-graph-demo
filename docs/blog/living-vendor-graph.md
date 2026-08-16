@@ -474,32 +474,88 @@ screenshot of the account page that proves it.
 
 ---
 
-## What actually happened, including the part that did not
+## Run it twice: what the graph does and does not guarantee
 
-Being honest about a live run is more useful than a clean fiction, and this one has a wrinkle worth
-studying.
+Being honest about a live run is more useful than a clean fiction, and running the identical
+sequence twice is where the interesting caveat lives.
 
-Both observations recorded the seat limit correctly — the v2 evidence file plainly contains
-`"seat_limit": 10`, and the screenshot above says `10 seats`. But in this run Zep's extraction
-produced a `HAS_SEAT_LIMIT` edge only for `5`, and never created the `10` edge, so the seat-limit
-fact was never superseded. The price and the pricing-version edges were invalidated correctly; the
-seat limit was not.
+In the run shown above, both observations recorded the seat limit correctly — the v2 evidence file
+plainly contains `"seat_limit": 10`, and the screenshot says `10 seats`. But Zep's extraction
+produced a `HAS_SEAT_LIMIT` edge only for `5`, and never created the `10` edge, so that fact was
+never superseded. Price and pricing version were invalidated correctly; the seat limit was not.
 
-That is a real and instructive property of LLM-driven graph extraction: what gets promoted from an
-episode to an edge is not guaranteed to be exhaustive, even when the episode payload is complete
-and structured. The evidence layer is what saves you — the ledger and the workspace files contain
-the full truth regardless of what the extractor chose to model, so a missing edge is a re-extraction
-problem, not lost data. If you depend on a specific fact being present, assert on it and re-ingest
-rather than assuming a clean structured payload will always produce a clean structured edge.
+So I ran the whole thing again — same code, same target, same two-observation sequence, a different
+workspace and a fresh graph. This time the extractor made *different* choices:
 
-Two other failures from the same build are worth passing on, because both cost real debugging time
-and neither is in anyone's docs:
+```text
+Pro –HAS_PRICE→ $49         invalidAt 2026-08-16T03:17:41Z   (superseded, as before)
+Pro –HAS_PRICE→ $69         current
+Pro –HAS_SEAT_LIMIT→ 10     current      <- appeared this time
+                                         <- and no HAS_SEAT_LIMIT→5 edge was created at all
+Starter –HAS_SEAT_LIMIT→ 3  current      <- also new; absent from the first run
+```
+
+The second run also produced a duplicate, partly mislabelled version edge: alongside the correct
+`PRICING_VERSION → v1` (invalidated at `03:17:41Z`), it created a `HAS_PRICING_VERSION` edge whose
+target node is `v1` but whose fact text reads "Acme Cloud uses pricing version v2."
+
+Two runs, identical structured input, two different graphs. That is the property to design around:
+what gets promoted from an episode to an edge is not guaranteed to be exhaustive or stable, even
+when the episode payload is complete, typed, and unambiguous. A declared ontology biases extraction;
+it does not make it deterministic.
+
+What *is* deterministic is the layer underneath. The CLI's `diff` is computed from the append-only
+ledger, not from the graph, so it reads the same both times:
+
+```text
+Acme Starter Plan ──costs──> $19/month  valid 2026-08-16 → present
+  seats: 3; features: Shared workspace, Email support; evidence: d1c0865d-…, screenshot: 8dc23c0c-…
+Acme Pro Plan ──costs──> $49/month  valid 2026-08-16 → 2026-08-16
+  seats: 5; features: SSO, Audit log; evidence: d1c0865d-…, screenshot: 8dc23c0c-…
+Acme Pro Plan ──costs──> $69/month  valid 2026-08-16 → present
+  seats: 10; features: SSO, Audit log, SCIM; evidence: 185d1e37-…, screenshot: 4bec7261-…
+```
+
+That is the practical argument for keeping evidence and graph as separate layers. The graph is a
+queryable, semantic, temporal *view*; the ledger and the workspace files are the record. A missing
+edge is a re-extraction problem, not lost data. If your application depends on a specific fact
+being present, assert on it and re-ingest rather than trusting that a clean payload yields a clean
+edge.
+
+Three other failures from this build are worth passing on, because each cost real debugging time
+and none of them is in anyone's docs:
 
 * **Workspace names become mailbox display names.** Naming a workspace
   `Living Vendor Graph 2026-08-16T02:22:18.501Z` caused every mailbox provisioning attempt to fail,
   because AgentMail rejects `:` in a display name. The workspace still came up with a working
   browser profile and a `@workspaces.invalid` address, so the failure surfaced much later as a
   confusing signup bug. `Date.now()` instead of `toISOString()` fixed it.
+* **"Wait for mail" needs an explicit lower bound, not a lookback window.** The second run signed up
+  again in a workspace whose inbox already held a verification email from ~50 minutes earlier. The
+  wait was called with a 30-second `lookback_ms`, and it returned the *stale* message anyway; the
+  agent dutifully navigated a dead token and landed on "Invalid link", then failed on an
+  unauthenticated dashboard several steps later. Reproduced directly against the API: with
+  `lookback_ms: 30000` and no `since`, the wait resolves with a message timestamped 50 minutes ago;
+  with an explicit `since`, it correctly times out. The fix is to capture a boundary before
+  submitting the form and pass it through — and to reject a message older than that boundary
+  instead of trusting the link:
+
+  ```ts
+  const mailSince = Date.now() - 5_000;                     // small clock-skew allowance
+  await client.fillCredential(sessionId, credential.id, [...], '#signup-submit');
+  const mail = await client.waitForMail(workspaceId, {
+    subjectContains: 'Acme Cloud verification',
+    since: mailSince,
+    timeoutMs: 120_000,
+  });
+  if (mail.message !== null && !isFreshMessage(mail.message.timestamp, mailSince)) {
+    throw new Error('Verification email was older than the signup boundary');
+  }
+  ```
+
+  Any long-lived agent identity hits this eventually. A durable mailbox accumulates history, and
+  "the most recent email matching this subject" is not the same question as "the email caused by the
+  action I just took."
 * **Guessing an SDK's response shape is a waste of an afternoon.** The first version of the
   renderer expected fields like `observations`, `startAt`, and `endAt`. The live response uses
   `edges[].fact`, `validAt`, `invalidAt`, and `episode_reference_time`. One real call answers a
