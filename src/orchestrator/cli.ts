@@ -42,10 +42,10 @@ async function main(): Promise<void> {
 async function observe(sinkModeOverride?: SinkMode): Promise<void> {
   const state = await loadState();
   const targetBaseUrl = resolveVendorBaseUrl(state);
-  const workspace = state
+  let workspace = state
     ? await client.getWorkspace(state.workspaceId)
-    : await client.createWorkspace(`Living Vendor Graph ${new Date().toISOString()}`);
-  if (workspace.status !== 'ready') await client.waitForWorkspaceReady(workspace.id);
+    : await client.createWorkspace(`Living Vendor Graph ${Date.now()}`);
+  if (workspace.status !== 'ready') workspace = await client.waitForWorkspaceReady(workspace.id);
   const identity = await client.getIdentity(workspace.id);
   console.log(`Agentstead workspace ${workspace.id} (${identity.email_address})`);
   const session = await client.connectBrowser(workspace.id, { reuse: true });
@@ -66,7 +66,7 @@ async function observe(sinkModeOverride?: SinkMode): Promise<void> {
         credentialId = existing.id;
         await login(session.id, credentialId, targetBaseUrl);
       } else {
-        credentialId = await signup(session.id, workspace.email, workspace.id, targetBaseUrl);
+        credentialId = await signup(session.id, identity.email_address, workspace.id, targetBaseUrl);
       }
     }
     const dashboard = await client.navigatePage(session.id, `${targetBaseUrl}/dashboard`);

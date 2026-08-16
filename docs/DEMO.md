@@ -94,6 +94,9 @@ The first run creates a workspace and waits for `ready`. It then:
 8. Sends it to Zep if the Zep sink is selected.
 9. Closes the browser session so the next run proves persistent context.
 
+Workspace names are passed through to AgentMail display names, so keep them
+free of characters that AgentMail rejects, such as `:`.
+
 Workspace ID, credential ID, vendor URL, and ledger location are stored in
 `DATA_DIR/orchestrator.json`.
 
