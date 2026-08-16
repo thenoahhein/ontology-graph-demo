@@ -128,7 +128,7 @@
       <h1>Living Vendor Graph</h1>
       <p class="subtitle">A practical guide to authenticated vendor observation, evidence capture, and temporal graph memory
 with Agentstead and Zep.</p>
-      <div class="meta"><a href="https://github.com/thenoahhein/ontology-graph-demo">Source repository</a><span>4,103 words · 19 min read</span></div>
+      <div class="meta"><a href="https://github.com/thenoahhein/ontology-graph-demo">Source repository</a><span>4,107 words · 19 min read</span></div>
     </div>
   </header>
   <div class="page-grid">
@@ -174,7 +174,7 @@ no way to come back later as the same user. That makes it hard to answer basic q
 <li>When did it stop being true?</li>
 <li>Can the same agent check again next week without a human logging it in?</li>
 </ul>
-<p>In this guide we’ll refer to the following terms:</p>
+<p>In this guide we'll refer to the following terms:</p>
 <ul class="lead-list">
 <li>An <strong>observation</strong> is a structured snapshot of vendor facts, captured at a specific time from a
 specific URL.</li>
@@ -184,7 +184,7 @@ screenshot it took, stored immutably.</li>
 <code>Pro –HAS_PRICE→ $49</code> valid from one timestamp to another.</li>
 <li><strong>Invalidation</strong> means marking a fact as no longer true, with the time it stopped being true,
 instead of overwriting it.</li>
-<li>A <strong>workspace identity</strong> is the agent’s durable account context: its own mailbox, browser
+<li>A <strong>workspace identity</strong> is the agent's durable account context: its own mailbox, browser
 profile, credentials, files, and activity log.</li>
 </ul>
 <table>
@@ -231,7 +231,7 @@ fills server-side.</li>
 references both file IDs.</li>
 <li>It appends the observation to a local JSONL ledger and sends it to Zep as a timestamped episode.</li>
 <li>It closes the browser session.</li>
-<li>The vendor’s pricing changes.</li>
+<li>The vendor's pricing changes.</li>
 <li>A new browser session reconnects to the same profile, is still authenticated, and observes again.</li>
 <li>Zep invalidates the superseded facts. The CLI and a static viewer show what changed, when, and
 on what evidence.</li>
@@ -274,7 +274,7 @@ API: workspaces, identity, credentials, browser sessions, page operations, mail 
 record; the graph is a queryable view over it.</li>
 </ul>
 <h2 id="using-the-demo"><a class="permalink" href="#using-the-demo" aria-label="Permalink to this section">#</a>Using the Demo</h2>
-<p>By the end, you’ll have:</p>
+<p>By the end, you'll have:</p>
 <ul>
 <li>A deployed Acme Cloud target with two pricing versions</li>
 <li>One Agentstead workspace with a verified vendor account and stored evidence</li>
@@ -288,17 +288,17 @@ generated at runtime and will differ from the examples below.</p>
 <li>Node.js 22</li>
 <li>An Agentstead API key</li>
 <li>A Zep Cloud API key (optional; without it the run uses the local file sink)</li>
-<li>An AgentMail API key for the target’s outbound verification mail</li>
+<li>An AgentMail API key for the target's outbound verification mail</li>
 </ul>
-<div class="code-block code-source"><div class="code-toolbar"><span class="code-label">source</span><button class="copy-code" type="button">Copy</button></div><pre><code>git <span class="hljs-built_in">clone</span> https://github.com/thenoahhein/ontology-graph-demo
+<div class="code-block code-shell"><div class="code-toolbar"><span class="code-label">shell</span><button class="copy-code" type="button">Copy</button></div><pre><code class="language-bash">git <span class="hljs-built_in">clone</span> https://github.com/thenoahhein/ontology-graph-demo
 <span class="hljs-built_in">cd</span> ontology-graph-demo
 npm install
 npm run build
 </code></pre></div>
 <h3 id="step-1-build-the-target-that-only-tells-the-truth-after-login" class="step-heading"><span class="step-badge">1</span><a class="permalink" href="#step-1-build-the-target-that-only-tells-the-truth-after-login" aria-label="Permalink to this section">#</a>Step 1: Build the Target That Only Tells the Truth After Login</h3>
 <p><code>GET /pricing</code> is public and intentionally incomplete:</p>
-<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/vendor-pricing-v1.png" alt="" loading="lazy"></button><figcaption></figcaption></figure></p>
-<p>It gives a “starting at” price and nothing else. No seat limit, no feature list, no version. This is
+<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/vendor-pricing-v1.png" alt="Acme Cloud public pricing page" loading="lazy"></button><figcaption>Acme Cloud public pricing page</figcaption></figure></p>
+<p>It gives a &quot;starting at&quot; price and nothing else. No seat limit, no feature list, no version. This is
 what a crawler sees.</p>
 <p>The authenticated dashboard renders from a typed catalog with two versions:</p>
 <div class="code-block code-source"><div class="code-toolbar"><span class="code-label">ts</span><button class="copy-code" type="button">Copy</button></div><pre><code class="language-ts"><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> <span class="hljs-attr">CATALOG</span>: <span class="hljs-title class_">Record</span>&lt;<span class="hljs-title class_">PricingVersion</span>, <span class="hljs-title class_">PricingCatalog</span>&gt; = {
@@ -340,7 +340,7 @@ behaves like a real product: no account, no dashboard.</p>
 <span class="hljs-keyword">const</span> identity = <span class="hljs-keyword">await</span> client.<span class="hljs-title function_">getIdentity</span>(workspace.<span class="hljs-property">id</span>);
 </code></pre></div>
 <p>Output:</p>
-<div class="code-block code-source"><div class="code-toolbar"><span class="code-label">source</span><button class="copy-code" type="button">Copy</button></div><pre><code><span class="hljs-selector-tag">Agentstead</span> <span class="hljs-selector-tag">workspace</span> <span class="hljs-number">60</span><span class="hljs-selector-tag">bc65ca-e0f5-49c8-b505-02d6360d32c9</span> (poisedresource475<span class="hljs-variable">@agentstead</span>.sh)
+<div class="code-block code-output"><div class="code-toolbar"><span class="code-label">output</span><button class="copy-code" type="button">Copy</button></div><pre><code class="language-text">Agentstead workspace 60bc65ca-e0f5-49c8-b505-02d6360d32c9 (poisedresource475@agentstead.sh)
 </code></pre></div>
 <p>A ready workspace has three things the graph cannot supply for itself: an inbox at a real domain, a
 persistent browser profile, and a credential vault scoped to that identity.</p>
@@ -374,10 +374,10 @@ It requests page operations by name, each bound to an origin:</p>
   <span class="hljs-string">&#x27;#signup-submit&#x27;</span>,
 );
 </code></pre></div>
-<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/vendor-signup.png" alt="" loading="lazy"></button><figcaption></figcaption></figure></p>
+<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/vendor-signup.png" alt="Acme Cloud signup form" loading="lazy"></button><figcaption>Acme Cloud signup form</figcaption></figure></p>
 <p><code>fillCredential</code> is the important call. The orchestrator never generates, sees, stores, or logs the
 password. It passes a credential ID, a field name, and a CSS selector; the secret is injected
-server-side into that origin only, and the form is submitted. The agent’s process memory never
+server-side into that origin only, and the form is submitted. The agent's process memory never
 contains the secret, so a prompt-injected agent cannot leak what it does not hold.</p>
 <p>Verification uses the workspace inbox:</p>
 <div class="code-block code-source"><div class="code-toolbar"><span class="code-label">ts</span><button class="copy-code" type="button">Copy</button></div><pre><code class="language-ts"><span class="hljs-keyword">const</span> mailSince = <span class="hljs-title class_">Date</span>.<span class="hljs-title function_">now</span>() - <span class="hljs-number">5_000</span>;
@@ -399,9 +399,9 @@ contains the secret, so a prompt-injected agent cannot leak what it does not hol
 <li><code>mail.extraction</code> returns structured links with confidence scores and a <code>matches_sender_domain</code>
 flag, plus codes for OTP-style flows. The agent does not regex a raw HTML body and hope the first
 <code>https://</code> it finds is not a tracking pixel.</li>
-<li><code>since</code> bounds the wait to the current signup. A durable inbox accumulates history, and “the most
-recent email matching this subject” is not the same question as “the email caused by the action I
-just took.” See the failure modes section; this one broke a run.</li>
+<li><code>since</code> bounds the wait to the current signup. A durable inbox accumulates history, and &quot;the most
+recent email matching this subject&quot; is not the same question as &quot;the email caused by the action I
+just took.&quot; See the failure modes section; this one broke a run.</li>
 </ul>
 <h3 id="step-4-read-the-authenticated-dashboard" class="step-heading"><span class="step-badge">4</span><a class="permalink" href="#step-4-read-the-authenticated-dashboard" aria-label="Permalink to this section">#</a>Step 4: Read the Authenticated Dashboard</h3>
 <div class="code-block code-source"><div class="code-toolbar"><span class="code-label">ts</span><button class="copy-code" type="button">Copy</button></div><pre><code class="language-ts"><span class="hljs-keyword">export</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">dashboardSelectors</span>(<span class="hljs-params"></span>): <span class="hljs-built_in">string</span>[] {
@@ -413,7 +413,7 @@ just took.” See the failure modes section; this one broke a run.</li>
 }
 </code></pre></div>
 <p>This is the <code>v1</code> screenshot the agent captured and filed as evidence:</p>
-<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/v1-authenticated-dashboard.png" alt="" loading="lazy"></button><figcaption></figcaption></figure></p>
+<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/v1-authenticated-dashboard.png" alt="Authenticated dashboard, v1" loading="lazy"></button><figcaption>Authenticated dashboard, v1</figcaption></figure></p>
 <p>The parser treats the visible selectors as authoritative and the JSON blob as an optional
 cross-check. A missing or unparseable blob does not fail a valid visible parse. A well-formed blob
 that disagrees with the visible page does:</p>
@@ -520,7 +520,7 @@ unprocessed episode, so the CLI polls for the facts it expects and degrades expl
 language, so <code>The Pro plan costs $49 per month.</code> is not a template you control:</p>
 <div class="code-block code-source"><div class="code-toolbar"><span class="code-label">ts</span><button class="copy-code" type="button">Copy</button></div><pre><code class="language-ts">facts.<span class="hljs-title function_">some</span>(<span class="hljs-function">(<span class="hljs-params">fact</span>) =&gt;</span> fact.<span class="hljs-title function_">includes</span>(planText) &amp;&amp; fact.<span class="hljs-title function_">includes</span>(amountText));
 </code></pre></div>
-<h3 id="step-7-change-the-vendor-s-pricing" class="step-heading"><span class="step-badge">7</span><a class="permalink" href="#step-7-change-the-vendor-s-pricing" aria-label="Permalink to this section">#</a>Step 7: Change the Vendor’s Pricing</h3>
+<h3 id="step-7-change-the-vendor-s-pricing" class="step-heading"><span class="step-badge">7</span><a class="permalink" href="#step-7-change-the-vendor-s-pricing" aria-label="Permalink to this section">#</a>Step 7: Change the Vendor's Pricing</h3>
 <div class="code-block code-shell"><div class="code-toolbar"><span class="code-label">shell</span><button class="copy-code" type="button">Copy</button></div><pre><code class="language-bash">npm run flip -- v2
 </code></pre></div>
 <p>Output:</p>
@@ -529,8 +529,8 @@ language, so <code>The Pro plan costs $49 per month.</code> is not a template yo
 <span class="hljs-attr">&quot;seatLimit&quot;</span><span class="hljs-punctuation">:</span><span class="hljs-number">10</span><span class="hljs-punctuation">,</span><span class="hljs-attr">&quot;features&quot;</span><span class="hljs-punctuation">:</span><span class="hljs-punctuation">[</span><span class="hljs-string">&quot;SSO&quot;</span><span class="hljs-punctuation">,</span><span class="hljs-string">&quot;Audit log&quot;</span><span class="hljs-punctuation">,</span><span class="hljs-string">&quot;SCIM&quot;</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">}</span><span class="hljs-punctuation">}</span><span class="hljs-punctuation">}</span><span class="hljs-punctuation">}</span>
 </code></pre></div>
 <p>The public page does not change:</p>
-<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/vendor-pricing-v2.png" alt="" loading="lazy"></button><figcaption></figcaption></figure></p>
-<p>It still reads “Starting at $49/month”. A public-page crawler reports no change at all. This is the
+<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/vendor-pricing-v2.png" alt="Acme Cloud public pricing page after the flip" loading="lazy"></button><figcaption>Acme Cloud public pricing page after the flip</figcaption></figure></p>
+<p>It still reads &quot;Starting at $49/month&quot;. A public-page crawler reports no change at all. This is the
 reason the authenticated path exists.</p>
 <h3 id="step-8-observe-again-in-a-new-browser-session" class="step-heading"><span class="step-badge">8</span><a class="permalink" href="#step-8-observe-again-in-a-new-browser-session" aria-label="Permalink to this section">#</a>Step 8: Observe Again in a New Browser Session</h3>
 <div class="code-block code-shell"><div class="code-toolbar"><span class="code-label">shell</span><button class="copy-code" type="button">Copy</button></div><pre><code class="language-bash">npm run observe
@@ -543,24 +543,24 @@ durable profile, checks <code>/account</code>, finds itself authenticated, and s
 loggedIn = accountRead.<span class="hljs-property">selectors</span>.<span class="hljs-title function_">some</span>(<span class="hljs-function">(<span class="hljs-params">s</span>) =&gt;</span> s.<span class="hljs-property">selector</span> === <span class="hljs-string">&#x27;#authenticated&#x27;</span> &amp;&amp; s.<span class="hljs-property">found</span>);
 </code></pre></div>
 <p>Output:</p>
-<div class="code-block code-source"><div class="code-toolbar"><span class="code-label">source</span><button class="copy-code" type="button">Copy</button></div><pre><code><span class="hljs-selector-tag">Agentstead</span> <span class="hljs-selector-tag">workspace</span> <span class="hljs-number">60</span><span class="hljs-selector-tag">bc65ca-e0f5-49c8-b505-02d6360d32c9</span> (poisedresource475<span class="hljs-variable">@agentstead</span>.sh)
-<span class="hljs-selector-tag">Observed</span> <span class="hljs-selector-tag">v2</span>; <span class="hljs-selector-tag">evidence</span> <span class="hljs-number">185</span><span class="hljs-selector-tag">d1e37-06df-4b7e-ad35-3eb8ce495253</span>; <span class="hljs-selector-tag">screenshot</span> <span class="hljs-number">4</span><span class="hljs-selector-tag">bec7261-8366-4e90-b4ff-8803f9bfa4fe</span>
+<div class="code-block code-output"><div class="code-toolbar"><span class="code-label">output</span><button class="copy-code" type="button">Copy</button></div><pre><code class="language-text">Agentstead workspace 60bc65ca-e0f5-49c8-b505-02d6360d32c9 (poisedresource475@agentstead.sh)
+Observed v2; evidence 185d1e37-06df-4b7e-ad35-3eb8ce495253; screenshot 4bec7261-8366-4e90-b4ff-8803f9bfa4fe
 </code></pre></div>
 <p>No second signup, no second credential, no second verification email. The activity stream for that
 session shows <code>/account</code> returning <code>Acme Cloud account</code> with <code>#authenticated</code> found, then
 <code>/dashboard</code>. The agent reads the updated dashboard:</p>
-<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/v2-authenticated-dashboard.png" alt="" loading="lazy"></button><figcaption></figcaption></figure></p>
+<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/v2-authenticated-dashboard.png" alt="Authenticated dashboard, v2" loading="lazy"></button><figcaption>Authenticated dashboard, v2</figcaption></figure></p>
 <p><code>$69/month</code>, <code>10 seats</code>, <code>SCIM</code>, and a second evidence pair filed in the same workspace.</p>
 <h3 id="step-9-ask-what-changed" class="step-heading"><span class="step-badge">9</span><a class="permalink" href="#step-9-ask-what-changed" aria-label="Permalink to this section">#</a>Step 9: Ask What Changed</h3>
 <div class="code-block code-shell"><div class="code-toolbar"><span class="code-label">shell</span><button class="copy-code" type="button">Copy</button></div><pre><code class="language-bash">npm run diff
 </code></pre></div>
 <p>Output (evidence IDs are from the repeat run described below):</p>
-<div class="code-block code-source"><div class="code-toolbar"><span class="code-label">source</span><button class="copy-code" type="button">Copy</button></div><pre><code><span class="hljs-string">Acme</span> <span class="hljs-string">Starter</span> <span class="hljs-string">Plan</span> <span class="hljs-string">──costs──&gt;</span> <span class="hljs-string">$19/month</span>  <span class="hljs-string">valid</span> <span class="hljs-number">2026-08-16</span> <span class="hljs-string">→</span> <span class="hljs-string">present</span>
-  <span class="hljs-attr">seats:</span> <span class="hljs-number">3</span><span class="hljs-string">;</span> <span class="hljs-attr">features:</span> <span class="hljs-string">Shared</span> <span class="hljs-string">workspace,</span> <span class="hljs-string">Email</span> <span class="hljs-string">support;</span> <span class="hljs-attr">evidence:</span> <span class="hljs-string">d1c0865d-…,</span> <span class="hljs-attr">screenshot:</span> <span class="hljs-string">8dc23c0c-…</span>
-<span class="hljs-string">Acme</span> <span class="hljs-string">Pro</span> <span class="hljs-string">Plan</span> <span class="hljs-string">──costs──&gt;</span> <span class="hljs-string">$49/month</span>  <span class="hljs-string">valid</span> <span class="hljs-number">2026-08-16</span> <span class="hljs-string">→</span> <span class="hljs-number">2026-08-16</span>
-  <span class="hljs-attr">seats:</span> <span class="hljs-number">5</span><span class="hljs-string">;</span> <span class="hljs-attr">features:</span> <span class="hljs-string">SSO,</span> <span class="hljs-string">Audit</span> <span class="hljs-string">log;</span> <span class="hljs-attr">evidence:</span> <span class="hljs-string">d1c0865d-…,</span> <span class="hljs-attr">screenshot:</span> <span class="hljs-string">8dc23c0c-…</span>
-<span class="hljs-string">Acme</span> <span class="hljs-string">Pro</span> <span class="hljs-string">Plan</span> <span class="hljs-string">──costs──&gt;</span> <span class="hljs-string">$69/month</span>  <span class="hljs-string">valid</span> <span class="hljs-number">2026-08-16</span> <span class="hljs-string">→</span> <span class="hljs-string">present</span>
-  <span class="hljs-attr">seats:</span> <span class="hljs-number">10</span><span class="hljs-string">;</span> <span class="hljs-attr">features:</span> <span class="hljs-string">SSO,</span> <span class="hljs-string">Audit</span> <span class="hljs-string">log,</span> <span class="hljs-string">SCIM;</span> <span class="hljs-attr">evidence:</span> <span class="hljs-string">185d1e37-…,</span> <span class="hljs-attr">screenshot:</span> <span class="hljs-string">4bec7261-…</span>
+<div class="code-block code-output"><div class="code-toolbar"><span class="code-label">output</span><button class="copy-code" type="button">Copy</button></div><pre><code class="language-text">Acme Starter Plan ──costs──&gt; $19/month  valid 2026-08-16 → present
+  seats: 3; features: Shared workspace, Email support; evidence: d1c0865d-…, screenshot: 8dc23c0c-…
+Acme Pro Plan ──costs──&gt; $49/month  valid 2026-08-16 → 2026-08-16
+  seats: 5; features: SSO, Audit log; evidence: d1c0865d-…, screenshot: 8dc23c0c-…
+Acme Pro Plan ──costs──&gt; $69/month  valid 2026-08-16 → present
+  seats: 10; features: SSO, Audit log, SCIM; evidence: 185d1e37-…, screenshot: 4bec7261-…
 </code></pre></div>
 <p>That view is computed from the ledger. The graph holds the same change as temporal edges:</p>
 <div class="code-block code-output"><div class="code-toolbar"><span class="code-label">output</span><button class="copy-code" type="button">Copy</button></div><pre><code class="language-text">Pro –HAS_PRICE→ $49   &quot;The Pro plan costs $49 per month.&quot;
@@ -578,18 +578,18 @@ determined that the second superseded the first.</p>
 </code></pre></div>
 <p>The viewer is a static page generated from a frozen capture of the live graph, not a live query UI.
 Superseded edges are grey and dashed; current edges are solid:</p>
-<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/graph-viewer-full.png" alt="" loading="lazy"></button><figcaption></figcaption></figure></p>
+<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/graph-viewer-full.png" alt="The Living Vendor Graph viewer" loading="lazy"></button><figcaption>The Living Vendor Graph viewer</figcaption></figure></p>
 <p>Clicking the dead <code>$49</code> edge resolves the episode it came from and shows the provenance: the
 authenticated URL, the workspace ID, both evidence file IDs, and the screenshot taken while the fact
 was true.</p>
-<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/graph-viewer-superseded-49.png" alt="" loading="lazy"></button><figcaption></figcaption></figure></p>
-<p>The temporal styling reads directly off the graph’s validity interval:</p>
+<p><figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image"><img src="./images/graph-viewer-superseded-49.png" alt="Clicking the superseded $49 edge" loading="lazy"></button><figcaption>Clicking the superseded $49 edge</figcaption></figure></p>
+<p>The temporal styling reads directly off the graph's validity interval:</p>
 <div class="code-block code-source"><div class="code-toolbar"><span class="code-label">ts</span><button class="copy-code" type="button">Copy</button></div><pre><code class="language-ts">{ <span class="hljs-attr">dead</span>: edge.<span class="hljs-property">invalidAt</span> ? <span class="hljs-string">&#x27;true&#x27;</span> : <span class="hljs-string">&#x27;false&#x27;</span> }
 <span class="hljs-comment">// edge[dead = &quot;true&quot;] -&gt; grey, dashed, faded</span>
 </code></pre></div>
 <h2 id="running-it-twice-what-extraction-does-not-guarantee"><a class="permalink" href="#running-it-twice-what-extraction-does-not-guarantee" aria-label="Permalink to this section">#</a>Running It Twice: What Extraction Does Not Guarantee</h2>
 <p>In the run shown above, both observations recorded the seat limit correctly. The v2 evidence file
-contains <code>&quot;seat_limit&quot;: 10</code> and the screenshot reads <code>10 seats</code>. Zep’s extraction produced a
+contains <code>&quot;seat_limit&quot;: 10</code> and the screenshot reads <code>10 seats</code>. Zep's extraction produced a
 <code>HAS_SEAT_LIMIT</code> edge only for <code>5</code> and never created the <code>10</code> edge, so that fact was never
 superseded. Price and pricing version were invalidated correctly; the seat limit was not.</p>
 <p>Running the identical sequence again, with the same code and the same target but a different
@@ -602,7 +602,7 @@ Starter –HAS_SEAT_LIMIT→ 3  current      &lt;- also new; absent from the fir
 </code></pre></div>
 <p>The second run also produced a duplicate, partly mislabelled version edge. Alongside the correct
 <code>PRICING_VERSION → v1</code> (invalidated at <code>03:17:41Z</code>), it created a <code>HAS_PRICING_VERSION</code> edge whose
-target node is <code>v1</code> but whose fact text reads “Acme Cloud uses pricing version v2.”</p>
+target node is <code>v1</code> but whose fact text reads &quot;Acme Cloud uses pricing version v2.&quot;</p>
 <p>Two runs, identical structured input, two different graphs. Plan for this: what gets promoted from
 an episode to an edge is not guaranteed to be exhaustive or stable, even when the payload is
 complete, typed, and unambiguous. A declared ontology biases extraction; it does not make it
@@ -623,18 +623,18 @@ signup bug. Use <code>Date.now()</code> rather than <code>toISOString()</code>.<
 <li><strong>A lookback window is not a lower bound.</strong> A repeat run signed up in a workspace whose inbox
 already held a verification email from about 50 minutes earlier. The wait was called with
 <code>lookback_ms: 30000</code> and returned the stale message anyway. The agent navigated a dead token,
-landed on “Invalid link”, and failed several steps later on an unauthenticated dashboard.
+landed on &quot;Invalid link&quot;, and failed several steps later on an unauthenticated dashboard.
 Reproduced against the API: with <code>lookback_ms: 30000</code> and no <code>since</code>, the wait resolves with a
 message timestamped 50 minutes earlier; with an explicit <code>since</code>, it times out correctly. Pass
 <code>since</code> and reject a message older than that boundary.</li>
-<li><strong>Stored credentials can outlive the account.</strong> The target’s user store does not survive a
+<li><strong>Stored credentials can outlive the account.</strong> The target's user store does not survive a
 redeploy, so a credential in the vault kept pointing at an account that no longer existed. Verify
 authentication after login and fall back to signup once instead of proceeding to a dashboard read
 that cannot succeed.</li>
 <li><strong>Report the real failure.</strong> Reading an unauthenticated page with dashboard selectors originally
 reported <code>missing usable #pricing-version</code>, which blames the page shape for an auth problem. Check
 for the unauthenticated page first and say so.</li>
-<li><strong>Do not guess an SDK’s response shape.</strong> The first version of the renderer expected fields named
+<li><strong>Do not guess an SDK's response shape.</strong> The first version of the renderer expected fields named
 <code>observations</code>, <code>startAt</code>, and <code>endAt</code>. The live response uses <code>edges[].fact</code>, <code>validAt</code>,
 <code>invalidAt</code>, and <code>episode_reference_time</code>. One real call settles it.</li>
 </ul>
@@ -675,7 +675,7 @@ npm run demo         <span class="hljs-comment"># observe, flip, observe, diff</
 <tr>
 <td><code>SIGNUP_SHARED_SECRET</code></td>
 <td>both</td>
-<td>Guards the target’s signup route</td>
+<td>Guards the target's signup route</td>
 </tr>
 <tr>
 <td><code>ADMIN_SECRET</code></td>
@@ -701,7 +701,7 @@ the account that logged in, verify the claim, notice when it changed, and show t
 it.</p>
 <p>Source: <a href="https://github.com/thenoahhein/ontology-graph-demo">thenoahhein/ontology-graph-demo</a>. The
 viewer data is a capture of a live Zep graph produced by the run described above. The screenshots
-are the agent’s own evidence files and the deployed target.</p>
+are the agent's own evidence files and the deployed target.</p>
 </article>
   </div>
   <div class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Image preview">
@@ -732,13 +732,40 @@ are the agent’s own evidence files and the deployed target.</p>
       }
     }));
     const links = [...document.querySelectorAll('.toc-link')];
-    const headings = links.map((link) => document.getElementById(link.dataset.target)).filter(Boolean);
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-      if (!visible) return;
-      links.forEach((link) => link.classList.toggle('active', link.dataset.target === visible.target.id));
-    }, { rootMargin: '-12% 0px -72% 0px', threshold: 0 });
-    headings.forEach((heading) => observer.observe(heading));
+    const headings = links
+      .map((link) => document.getElementById(link.dataset.target))
+      .filter((heading) => heading instanceof HTMLElement);
+    const scrollOffset = 120;
+    let activeId = '';
+    let updateScheduled = false;
+    const updateActive = () => {
+      updateScheduled = false;
+      if (headings.length === 0) return;
+      const atTop = window.scrollY <= 8;
+      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 8;
+      let active = headings[0];
+      if (atBottom) {
+        active = headings[headings.length - 1];
+      } else if (!atTop) {
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= scrollOffset) active = heading;
+          else break;
+        }
+      }
+      if (active.id === activeId) return;
+      activeId = active.id;
+      links.forEach((link) => link.classList.toggle('active', link.dataset.target === activeId));
+      const activeLink = links.find((link) => link.dataset.target === activeId);
+      activeLink?.scrollIntoView({ block: 'nearest' });
+    };
+    const scheduleActiveUpdate = () => {
+      if (updateScheduled) return;
+      updateScheduled = true;
+      window.requestAnimationFrame(updateActive);
+    };
+    window.addEventListener('scroll', scheduleActiveUpdate, { passive: true });
+    window.addEventListener('resize', scheduleActiveUpdate);
+    updateActive();
   </script>
 </body>
 </html>

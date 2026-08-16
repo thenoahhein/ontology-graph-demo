@@ -43,6 +43,7 @@ function slugify(value: string): string {
 
 function codeKind(info: string): 'shell' | 'output' | 'source' {
   const language = info.trim().split(/\s+/)[0]?.toLowerCase();
+  if (!language) return 'output';
   if (language === 'bash' || language === 'sh' || language === 'shell') return 'shell';
   if (language === 'text' || language === 'txt' || language === 'console') return 'output';
   return 'source';
@@ -56,12 +57,12 @@ function codeLabel(kind: ReturnType<typeof codeKind>, language: string): string 
 
 function highlightCode(code: string, language: string): string {
   if (language && hljs.getLanguage(language)) return hljs.highlight(code, { language }).value;
-  return hljs.highlightAuto(code).value;
+  return escapeHtml(code);
 }
 
 const options: Options = {
   html: true,
-  typographer: true,
+  typographer: false,
   highlight: highlightCode,
 };
 const md = new MarkdownIt(options);
@@ -118,7 +119,6 @@ if (firstHeading >= 0) {
   }
 }
 
-const defaultFence = md.renderer.rules.fence;
 md.renderer.rules.fence = (fenceTokens, index, renderOptions, renderEnv) => {
   const token = fenceTokens[index];
   if (!token) return '';
@@ -133,7 +133,6 @@ md.renderer.rules.fence = (fenceTokens, index, renderOptions, renderEnv) => {
     `<button class="copy-code" type="button">Copy</button></div>` +
     `<pre><code${codeClass}>${highlighted}</code></pre></div>\n`;
 };
-if (!defaultFence) throw new Error('Markdown fence renderer was not available');
 
 md.renderer.rules.heading_open = (headingTokens, index) => {
   const token = headingTokens[index];
@@ -150,7 +149,7 @@ md.renderer.rules.image = (imageTokens, index, renderOptions, renderEnv, self) =
   const token = imageTokens[index];
   if (!token) return '';
   const src = token.attrGet('src') ?? '';
-  const alt = token.attrGet('alt') ?? token.content;
+  const alt = token.attrGet('alt') || token.content;
   return `<figure class="image-frame"><button class="zoom-image" type="button" aria-label="Zoom image">` +
     `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy"></button>` +
     `<figcaption>${escapeHtml(alt)}</figcaption></figure>`;
@@ -327,13 +326,40 @@ const html = `<!doctype html>
       }
     }));
     const links = [...document.querySelectorAll('.toc-link')];
-    const headings = links.map((link) => document.getElementById(link.dataset.target)).filter(Boolean);
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-      if (!visible) return;
-      links.forEach((link) => link.classList.toggle('active', link.dataset.target === visible.target.id));
-    }, { rootMargin: '-12% 0px -72% 0px', threshold: 0 });
-    headings.forEach((heading) => observer.observe(heading));
+    const headings = links
+      .map((link) => document.getElementById(link.dataset.target))
+      .filter((heading) => heading instanceof HTMLElement);
+    const scrollOffset = 120;
+    let activeId = '';
+    let updateScheduled = false;
+    const updateActive = () => {
+      updateScheduled = false;
+      if (headings.length === 0) return;
+      const atTop = window.scrollY <= 8;
+      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 8;
+      let active = headings[0];
+      if (atBottom) {
+        active = headings[headings.length - 1];
+      } else if (!atTop) {
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= scrollOffset) active = heading;
+          else break;
+        }
+      }
+      if (active.id === activeId) return;
+      activeId = active.id;
+      links.forEach((link) => link.classList.toggle('active', link.dataset.target === activeId));
+      const activeLink = links.find((link) => link.dataset.target === activeId);
+      activeLink?.scrollIntoView({ block: 'nearest' });
+    };
+    const scheduleActiveUpdate = () => {
+      if (updateScheduled) return;
+      updateScheduled = true;
+      window.requestAnimationFrame(updateActive);
+    };
+    window.addEventListener('scroll', scheduleActiveUpdate, { passive: true });
+    window.addEventListener('resize', scheduleActiveUpdate);
+    updateActive();
   </script>
 </body>
 </html>
