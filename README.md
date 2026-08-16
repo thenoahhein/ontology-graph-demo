@@ -68,6 +68,14 @@ The local ledger is always written. If `SINK_MODE=auto` and `ZEP_API_KEY` is
 missing, the file sink is selected. Use `SINK_MODE=file` for an explicit
 offline run.
 
+Zep ingestion and graph extraction are asynchronous. The `diff` command polls
+until the expected price facts appear, then renders their `validAt` and
+`invalidAt` intervals; if processing exceeds the timeout, it reports that
+Zep is still processing and renders the edges currently available. Zep also
+rejects reserved ontology field names such as `name`, `summary`, and
+`created_at`, so the demo uses namespaced fields such as `company_name` and
+`plan_name`.
+
 ## Local commands
 
 ```bash

@@ -94,6 +94,9 @@ The first run creates a workspace and waits for `ready`. It then:
 8. Sends it to Zep if the Zep sink is selected.
 9. Closes the browser session so the next run proves persistent context.
 
+Workspace names are passed through to AgentMail display names, so keep them
+free of characters that AgentMail rejects, such as `:`.
+
 Workspace ID, credential ID, vendor URL, and ledger location are stored in
 `DATA_DIR/orchestrator.json`.
 
@@ -136,6 +139,13 @@ the sink creates the graph if necessary, sets the declared ontology, and calls
 `client.graph.add` with the JSON observation and its explicit observation
 timestamp. The local JSONL ledger is still written first and remains the
 source for `diff`.
+
+Zep processes episodes and extracts graph facts asynchronously. `diff` polls
+for the expected price facts before rendering the search results; if the
+timeout expires, it prints a processing notice and renders whatever edges are
+available. When extending the ontology, avoid Zep-reserved field names such as
+`name`, `summary`, and `created_at`; this demo uses `company_name`,
+`product_name`, `plan_name`, and `feature_name` instead.
 
 `ZEP_GRAPH_VIEWER_URL` is optional. If your Zep deployment gives you a viewer
 URL template, set for example:
