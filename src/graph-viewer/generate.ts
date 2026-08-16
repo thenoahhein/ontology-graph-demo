@@ -196,7 +196,7 @@ const html = `<!doctype html>
       ...capture.edges.map((edge) => {
         const source = nodeByName.get(edge.source_node_name);
         const target = nodeByName.get(edge.target_node_name);
-        return { data: { id: edge.uuid, source: source?.uuid, target: target?.uuid, label: edge.name, dead: Boolean(edge.invalidAt), focal: edge.name === 'HAS_PRICE' && (edge.target_node_name === '$49' || edge.target_node_name === '$69') } };
+        return { data: { id: edge.uuid, source: source?.uuid, target: target?.uuid, label: edge.name, dead: edge.invalidAt ? 'true' : 'false', focal: edge.name === 'HAS_PRICE' && (edge.target_node_name === '$49' || edge.target_node_name === '$69') ? 'true' : 'false' } };
       }).filter((edge) => edge.data.source && edge.data.target),
     ];
     const cy = cytoscape({
