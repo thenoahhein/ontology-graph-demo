@@ -113,3 +113,5 @@ the configured health check. Attach a persistent Railway volume and point
 redeploys.
 
 For the full local and hosted flow, see [`docs/DEMO.md`](docs/DEMO.md).
+
+For the technical walkthrough, see [`docs/blog/living-vendor-graph.md`](docs/blog/living-vendor-graph.md).
