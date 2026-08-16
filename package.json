@@ -15,7 +15,8 @@
     "observe": "node dist/orchestrator/cli.js observe",
     "flip": "node dist/orchestrator/cli.js flip",
     "diff": "node dist/orchestrator/cli.js diff",
-    "demo": "node dist/orchestrator/cli.js demo"
+    "demo": "node dist/orchestrator/cli.js demo",
+    "graph:view": "node dist/graph-viewer/generate.js"
   },
   "dependencies": {
     "@getzep/zep-cloud": "3.26.0",
