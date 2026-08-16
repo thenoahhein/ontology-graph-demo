@@ -50,12 +50,8 @@ async function observe(sinkModeOverride?: SinkMode): Promise<void> {
   console.log(`Agentstead workspace ${workspace.id} (${identity.email_address})`);
   const session = await client.connectBrowser(workspace.id, { reuse: true });
   try {
-    let loggedIn = false;
-    const accountPage = await client.navigatePage(session.id, `${targetBaseUrl}/account`);
-    if (accountPage.url.startsWith(targetBaseUrl)) {
-      const accountRead = await client.readPage(session.id, ['#authenticated'], targetBaseUrl);
-      loggedIn = accountRead.selectors.some((selector) => selector.selector === '#authenticated' && selector.found);
-    }
+    let loggedIn = await isAuthenticated(session.id, targetBaseUrl);
+    let signupAttempted = false;
     let credentialId = state?.credentialId;
     if (!loggedIn) {
       const credentials = await client.listCredentials(workspace.id);
@@ -65,9 +61,22 @@ async function observe(sinkModeOverride?: SinkMode): Promise<void> {
       if (existing) {
         credentialId = existing.id;
         await login(session.id, credentialId, targetBaseUrl);
+        loggedIn = await isAuthenticated(session.id, targetBaseUrl);
+        if (!loggedIn) {
+          signupAttempted = true;
+          credentialId = await signupWithClearError(session.id, identity.email_address, workspace.id, targetBaseUrl);
+          loggedIn = await isAuthenticated(session.id, targetBaseUrl);
+        }
       } else {
-        credentialId = await signup(session.id, identity.email_address, workspace.id, targetBaseUrl);
+        signupAttempted = true;
+        credentialId = await signupWithClearError(session.id, identity.email_address, workspace.id, targetBaseUrl);
+        loggedIn = await isAuthenticated(session.id, targetBaseUrl);
       }
+    }
+    if (!loggedIn) {
+      throw new Error(signupAttempted
+        ? 'Signup failed: verification completed but vendor account is not authenticated'
+        : 'Credential login did not authenticate the vendor account');
     }
     const dashboard = await client.navigatePage(session.id, `${targetBaseUrl}/dashboard`);
     const read = await client.readPage(session.id, dashboardSelectors(), targetBaseUrl);
@@ -109,6 +118,24 @@ async function observe(sinkModeOverride?: SinkMode): Promise<void> {
     console.log(`Observed ${observation.pricing_version}; evidence ${rawFile.id}; screenshot ${screenshotFile.id}`);
   } finally {
     await client.closeBrowser(session.id);
+  }
+}
+
+async function isAuthenticated(sessionId: string, targetBaseUrl: string): Promise<boolean> {
+  const accountPage = await client.navigatePage(sessionId, `${targetBaseUrl}/account`);
+  if (!accountPage.url.startsWith(targetBaseUrl)) return false;
+  const accountRead = await client.readPage(sessionId, ['#authenticated'], targetBaseUrl);
+  return accountRead.selectors.some((selector) => selector.selector === '#authenticated' && selector.found);
+}
+
+async function signupWithClearError(
+  sessionId: string, email: string, workspaceId: string, targetBaseUrl: string,
+): Promise<string> {
+  try {
+    return await signup(sessionId, email, workspaceId, targetBaseUrl);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Signup failed: ${message}`);
   }
 }
 

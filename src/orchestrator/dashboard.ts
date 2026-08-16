@@ -22,6 +22,9 @@ export function dashboardSelectors(): string[] {
 }
 
 export function parseDashboard(read: PageRead): DashboardData {
+  if (read.title.trim().toLowerCase() === 'not authenticated') {
+    throw new Error(`Vendor dashboard was not authenticated (page title: ${read.title})`);
+  }
   const selectors = new Map(read.selectors.map((selector) => [selector.selector, selector]));
   const pricingVersion = requiredText(selectors, '#pricing-version');
   const plans = ['starter', 'pro'].map((key) => ({
