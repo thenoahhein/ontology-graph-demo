@@ -1,67 +1,132 @@
-# The Living Vendor Graph
+# Living Vendor Graph
 
-### Giving a context graph an account, a browser, and a memory of where every fact came from
+A practical guide to authenticated vendor observation, evidence capture, and temporal graph memory
+with Agentstead and Zep.
 
-Context graphs give an agent a model of the world. **Agentstead gives the agent a place in it.**
+## Authenticated Observation, Evidence, and Temporal Truth
 
-A knowledge graph can tell you that Acme Cloud's Pro plan costs $49/month. It cannot tell you
-whether that number came from a marketing page written eighteen months ago or from the billing
-screen of a real account five minutes ago. It cannot log in. It cannot receive the verification
-email. It cannot come back next week as the same user and check whether anything moved.
+This guide explains why vendor monitoring breaks when an agent can only read public pages, what a
+durable workspace identity changes, and how to run a before-and-after demo that makes the
+difference concrete. The demo signs an agent up to a SaaS target, verifies its own email, reads the
+authenticated dashboard, stores the evidence, and sends the observation to a temporal graph. Then
+the vendor changes its pricing and the agent does it again.
 
-This tutorial builds the thing that can. By the end you will have:
+Every command, screenshot, timestamp, and identifier below comes from real runs against a deployed
+target.
 
-* a deterministic SaaS target whose *public* page is deliberately vague and whose *authenticated*
-  dashboard is the ground truth,
-* an agent with a durable identity — its own mailbox, its own generated credential, its own
-  persistent browser profile — that signs itself up and comes back later,
-* every observation stored as immutable evidence (raw page read + screenshot) in that agent's
-  workspace,
-* a temporal graph in Zep where `Pro costs $49` does not get overwritten when the price changes;
-  it gets *invalidated*, with a timestamp,
-* and a small viewer that draws the dead edge next to the live one, with the evidence behind both.
+## Why Authenticated Vendor Monitoring Is Hard
 
-Everything below is from a real run against a deployed target. The screenshots are the actual
-artifacts the agent captured, not mockups, and the graph data is a capture of the live graph.
+Most competitive-intelligence tooling was designed for two kinds of readers:
 
----
+1. A crawler fetching public documents
+2. A human with an account, reading a dashboard by hand
 
-## The three layers
+That model breaks once you want an agent to track what is true inside a product over time. The
+public page usually omits the facts you care about, and the crawler has no account, no inbox, and
+no way to come back later as the same user. That makes it hard to answer basic questions like:
 
-It helps to be precise about which system is responsible for what, because the interesting design
-decision in this demo is what we *refused* to build.
+- Where exactly did this fact come from?
+- When did it stop being true?
+- Can the same agent check again next week without a human logging it in?
+
+In this guide we'll refer to the following terms:
+
+- An **observation** is a structured snapshot of vendor facts, captured at a specific time from a
+  specific URL.
+- **Evidence** is the raw material behind an observation: the page read the agent performed and the
+  screenshot it took, stored immutably.
+- A **temporal edge** is a graph relationship with a validity interval, such as
+  `Pro –HAS_PRICE→ $49` valid from one timestamp to another.
+- **Invalidation** means marking a fact as no longer true, with the time it stopped being true,
+  instead of overwriting it.
+- A **workspace identity** is the agent's durable account context: its own mailbox, browser
+  profile, credentials, files, and activity log.
+
+| What goes wrong | Why the old way fails | What this demo adds |
+| --- | --- | --- |
+| Facts are unavailable | Public pricing pages omit seat limits, feature availability, and version, so the crawler never sees them. | The agent holds an account and reads the authenticated dashboard. |
+| No provenance | A scraped number is a number. There is no way to show what page produced it. | Every observation carries the URL, workspace, page-read file ID, and screenshot file ID. |
+| Overwrites destroy history | A key-value store replaces `$49` with `$69` and the old fact is gone. | The graph invalidates the old edge with a timestamp and keeps it queryable. |
+| No continuity | Each run starts from a blank browser and cannot get back into the account. | A persistent browser profile means a new session is still logged in. |
+
+## What the Demo Does and How It Works
+
+The sequence is:
+
+1. The agent gets a workspace identity: a real inbox, a persistent browser profile, and a
+   credential vault.
+2. It signs up to the target using its workspace email and a credential Agentstead generates and
+   fills server-side.
+3. It waits for the verification email in its own inbox and follows the extracted link.
+4. It reads the authenticated dashboard by CSS selector and parses the plan facts.
+5. It writes the raw page read and a screenshot to workspace files, then builds an observation that
+   references both file IDs.
+6. It appends the observation to a local JSONL ledger and sends it to Zep as a timestamped episode.
+7. It closes the browser session.
+8. The vendor's pricing changes.
+9. A new browser session reconnects to the same profile, is still authenticated, and observes again.
+10. Zep invalidates the superseded facts. The CLI and a static viewer show what changed, when, and
+    on what evidence.
+
+Three layers are responsible for three different questions:
 
 | Layer | What it answers |
 | --- | --- |
-| Ontology / context graph | What exists? How is it related? What is true *now*? |
+| Ontology / context graph | What exists? How is it related? What is true now? |
 | Agent framework | What should the agent do next? |
 | Agentstead | Who is the agent? What can it access? Can it return later? What did it do? |
 
-Agentstead deliberately does not get nodes, edges, embeddings, or graph queries. The graph stays in
-Zep, Graphiti, Neo4j, or the customer's own ontology. Agentstead supplies the durable workspace
-identity, the supervised browser, the mailbox, the credentials, the evidence files, and the
-activity trail.
+The boundary matters for the implementation: Agentstead is not used as a graph database. It does
+not store nodes, edges, embeddings, or graph queries. It supplies identity, authenticated access,
+supervised browser operations, evidence files, and an activity trail. The graph stays in Zep.
 
-That boundary is what makes the story composable. Your graph already knows that a vendor offers
-SSO. Agentstead gives your agent the *account* that logged in, verified the claim, noticed when it
-changed, and can act on it.
+## The Target, the Client, and the Sinks
 
----
+- The **vendor target** (`src/vendor/`) is a deterministic Express app called Acme Cloud. It has a
+  vague public pricing page, an authenticated dashboard, two pricing versions, and an admin
+  endpoint that switches between them.
+- The **Agentstead client** (`src/agentstead/client.ts`) is a typed HTTP client over the Agentstead
+  API: workspaces, identity, credentials, browser sessions, page operations, mail waits, and files.
+- The **orchestrator** (`src/orchestrator/cli.ts`) runs `observe`, `flip`, `diff`, and `demo`.
+- The **sinks** (`src/graph/`) are the append-only JSONL ledger and the Zep graph. The ledger is the
+  record; the graph is a queryable view over it.
 
-## Part 1 — A target that tells the truth only after you log in
+## Using the Demo
 
-Competitive-intelligence demos usually scrape a public pricing page, which is exactly the case
-where you do not need an authenticated agent. So the target here is built the other way around.
+By the end, you'll have:
 
-`GET /pricing` is public and intentionally unhelpful:
+- A deployed Acme Cloud target with two pricing versions
+- One Agentstead workspace with a verified vendor account and stored evidence
+- A Zep graph where the old price is invalidated rather than overwritten
+- A static viewer that renders the temporal graph with provenance on each edge
+
+A quick note before running the demo: workspace IDs, credential IDs, file IDs, and timestamps are
+generated at runtime and will differ from the examples below.
+
+### Prerequisites
+
+- Node.js 22
+- An Agentstead API key
+- A Zep Cloud API key (optional; without it the run uses the local file sink)
+- An AgentMail API key for the target's outbound verification mail
+
+```
+git clone https://github.com/thenoahhein/ontology-graph-demo
+cd ontology-graph-demo
+npm install
+npm run build
+```
+
+### Step 1: Build the Target That Only Tells the Truth After Login
+
+`GET /pricing` is public and intentionally incomplete:
 
 ![Acme Cloud public pricing page](./images/vendor-pricing-v1.png)
 
-"Starting at $49/month. Contact sales for current limits and feature availability." No seat limit,
-no feature list, no version. This is what a crawler sees.
+It gives a "starting at" price and nothing else. No seat limit, no feature list, no version. This is
+what a crawler sees.
 
-The authenticated dashboard is where the real catalog lives, rendered from a typed, data-driven
-catalog with two versions:
+The authenticated dashboard renders from a typed catalog with two versions:
 
 ```ts
 export const CATALOG: Record<PricingVersion, PricingCatalog> = {
@@ -82,12 +147,10 @@ export const CATALOG: Record<PricingVersion, PricingCatalog> = {
 };
 ```
 
-Starter is identical in both versions. That is on purpose: when the diff runs, you want a stable
-plan sitting next to the changed one, so you can see that the graph is not simply re-asserting
-everything it sees.
+Starter is identical in both versions. That is deliberate: it gives the diff a stable plan next to
+the changed one, so you can confirm the graph is not re-asserting everything it sees.
 
-The dashboard markup gives every fact a stable ID, plus a JSON blob that is used strictly as a
-cross-check (more on why later):
+Every fact on the dashboard gets a stable ID, plus a JSON blob used as a cross-check:
 
 ```ts
 `<h2 id="plan-${plan.key}-name">${plan.name}</h2>
@@ -99,32 +162,10 @@ cross-check (more on why later):
  <script type="application/json" id="plan-json">${json}</script>`
 ```
 
-And one admin endpoint lets us play the role of the vendor changing its mind:
+Signup requires a shared secret and verification mail is sent through AgentMail, so the target
+behaves like a real product: no account, no dashboard.
 
-```bash
-curl -X POST "$VENDOR/admin/pricing-version" \
-  -H "x-admin-secret: $ADMIN_SECRET" \
-  -H 'content-type: application/json' \
-  -d '{"version":"v1"}'
-```
-
-It answers with the catalog it just switched to:
-
-```json
-{"version":"v1","catalog":{"version":"v1","plans":{"starter":{"name":"Starter","monthlyPrice":19,
-"seatLimit":3,"features":["Shared workspace","Email support"]},"pro":{"name":"Pro","monthlyPrice":49,
-"seatLimit":5,"features":["SSO","Audit log"]}}}}
-```
-
-Signup is guarded by a shared secret, and verification mail is sent through AgentMail, so the
-target behaves like a real product: you cannot reach the dashboard without an account, and you
-cannot get an account without receiving email.
-
----
-
-## Part 2 — Giving the agent a place to live
-
-The agent's identity is a workspace. One call creates it; one call waits for it to be real:
+### Step 2: Give the Agent a Workspace Identity
 
 ```ts
 let workspace = state
@@ -133,19 +174,23 @@ let workspace = state
 if (workspace.status !== 'ready') workspace = await client.waitForWorkspaceReady(workspace.id);
 
 const identity = await client.getIdentity(workspace.id);
-// -> lazyaward802@agentstead.sh
 ```
 
-A ready workspace comes with three things the graph cannot supply for itself: a real inbox at a
-real domain, a persistent browser profile, and a credential vault scoped to that identity.
+Output:
 
-Note the `waitForWorkspaceReady` reassignment — that line is a bug fix, not decoration. Workspace
-creation returns immediately with a placeholder `@workspaces.invalid` address while the mailbox is
-still being provisioned. Signing up with the pre-ready value gets you an account whose verification
-email goes nowhere.
+```
+Agentstead workspace 60bc65ca-e0f5-49c8-b505-02d6360d32c9 (poisedresource475@agentstead.sh)
+```
 
-The browser is *supervised*: the client never receives a CDP URL and never drives Playwright
-itself. It asks for page operations by name.
+A ready workspace has three things the graph cannot supply for itself: an inbox at a real domain, a
+persistent browser profile, and a credential vault scoped to that identity.
+
+The `waitForWorkspaceReady` reassignment is required, not cosmetic. Workspace creation returns
+immediately with a placeholder `@workspaces.invalid` address while the mailbox is still
+provisioning. Signing up with that value produces an account whose verification email goes nowhere.
+
+The browser is supervised. The client never receives a CDP URL and never drives Playwright itself.
+It requests page operations by name, each bound to an origin:
 
 ```ts
 const session = await client.connectBrowser(workspace.id, { reuse: true });
@@ -156,15 +201,7 @@ const read = await client.readPage(session.id, dashboardSelectors(), vendor);
 const shot = await client.screenshotPage(session.id, vendor, true);
 ```
 
-Navigate, fill, click, read, wait, screenshot. Every one of those is an audited, origin-bound
-operation rather than arbitrary remote code execution against a browser you happen to be holding
-open. The `origin` argument is not cosmetic: it pins the operation to the site you think you are on.
-
----
-
-## Part 3 — Signing itself up, without ever seeing its own password
-
-Here is the whole signup path:
+### Step 3: Sign Up and Verify
 
 ```ts
 await client.navigatePage(sessionId, `${vendor}/signup?secret=${signupSecret}`);
@@ -174,7 +211,7 @@ const credential = await client.createCredential(workspaceId, {
   label: `acme-cloud-${Date.now()}`,
   site: vendor,
   username: email,
-  generate: true,          // Agentstead generates it
+  generate: true,          // Agentstead generates the secret
   secretLength: 24,
 });
 
@@ -187,39 +224,39 @@ await client.fillCredential(
 
 ![Acme Cloud signup form](./images/vendor-signup.png)
 
-The interesting call is `fillCredential`. The orchestrator never generates, sees, stores, or logs
-the password. It hands Agentstead a credential ID, a field name, and a CSS selector; the secret is
-injected server-side, into that origin only, and the form is submitted. The agent's own process
-memory never contains the secret, which means a prompt-injected agent cannot leak what it does not
-have.
+`fillCredential` is the important call. The orchestrator never generates, sees, stores, or logs the
+password. It passes a credential ID, a field name, and a CSS selector; the secret is injected
+server-side into that origin only, and the form is submitted. The agent's process memory never
+contains the secret, so a prompt-injected agent cannot leak what it does not hold.
 
-Then the mailbox earns its place:
+Verification uses the workspace inbox:
 
 ```ts
+const mailSince = Date.now() - 5_000;
+await client.fillCredential(sessionId, credential.id, [...], '#signup-submit');
 await client.waitForSelector(sessionId, '#pending', 60_000, vendor);
+
 const mail = await client.waitForMail(workspaceId, {
   subjectContains: 'Acme Cloud verification',
+  since: mailSince,
   timeoutMs: 120_000,
-  lookbackMs: 30_000,
 });
-const link = mail.extraction.links[0]?.url;
-await client.navigatePage(sessionId, link);
+if (mail.message !== null && !isFreshMessage(mail.message.timestamp, mailSince)) {
+  throw new Error('Verification email was older than the signup boundary');
+}
+await client.navigatePage(sessionId, mail.extraction.links[0].url);
 ```
 
-`mail.extraction` matters more than it looks. Agentstead returns structured extractions — links
-with confidence scores and a `matches_sender_domain` flag, plus codes for OTP-style flows — so the
-agent is not regexing a raw HTML email body and hoping the first `https://` it finds is not a
-tracking pixel or an unsubscribe link.
+Two details are load-bearing:
 
-The `lookbackMs` window exists because the verification email frequently arrives *before* the wait
-starts. Any real implementation of "wait for mail" needs to look slightly backwards in time, or
-you will lose the race on fast providers.
+- `mail.extraction` returns structured links with confidence scores and a `matches_sender_domain`
+  flag, plus codes for OTP-style flows. The agent does not regex a raw HTML body and hope the first
+  `https://` it finds is not a tracking pixel.
+- `since` bounds the wait to the current signup. A durable inbox accumulates history, and "the most
+  recent email matching this subject" is not the same question as "the email caused by the action I
+  just took." See the failure modes section; this one broke a run.
 
----
-
-## Part 4 — Reading the truth, and refusing to trust it blindly
-
-Once verified, the agent lands on the authenticated dashboard and reads it by selector:
+### Step 4: Read the Authenticated Dashboard
 
 ```ts
 export function dashboardSelectors(): string[] {
@@ -231,17 +268,13 @@ export function dashboardSelectors(): string[] {
 }
 ```
 
-This is the actual `v1` screenshot the agent took and filed as evidence:
+This is the `v1` screenshot the agent captured and filed as evidence:
 
 ![Authenticated dashboard, v1](./images/v1-authenticated-dashboard.png)
 
-Unstyled and ugly — and that is the point. This image is not a marketing asset, it is the
-provenance for a number in a graph.
-
-The parser treats the **visible selectors as authoritative** and the JSON blob as an optional
-cross-check. If the JSON is missing or unparseable, the visible parse still wins. If the JSON is
-present, well-formed, and *disagrees* with what a human would see on the page, the observation
-fails loudly:
+The parser treats the visible selectors as authoritative and the JSON blob as an optional
+cross-check. A missing or unparseable blob does not fail a valid visible parse. A well-formed blob
+that disagrees with the visible page does:
 
 ```ts
 if (!isDashboardData(parsed)) throw new Error('Dashboard JSON blob had an unexpected shape');
@@ -250,16 +283,15 @@ if (!dashboardDataMatches(parsed, visible)) {
 }
 ```
 
-That rule caught a genuinely subtle bug during the first live run. A supervised page read returns
-the *text content* of a matched element, so an unordered feature list arrives as one run-on string:
+That rule caught a real bug on the first live run. A supervised page read returns the text content
+of the matched element, so a feature list arrives as one concatenated string:
 
 ```json
 { "selector": "#plan-pro-features", "found": true, "text": "SSOAudit logSCIM" }
 ```
 
-Naive equality against `["SSO","Audit log","SCIM"]` fails, and the run aborts on a page that is
-perfectly fine. The fix is to compare semantically — normalize whitespace and case, then keep the
-structured features once the two sources agree:
+Comparing that to `["SSO","Audit log","SCIM"]` by equality fails on a page that is perfectly fine.
+Compare semantically instead, then keep the structured features once the sources agree:
 
 ```ts
 function compactFeatures(features: string[]): string {
@@ -267,12 +299,9 @@ function compactFeatures(features: string[]): string {
 }
 ```
 
----
+### Step 5: Store the Evidence Before the Facts
 
-## Part 5 — Evidence first, facts second
-
-Before anything reaches the graph, the raw material is written to durable workspace files under
-unique, timestamped paths:
+The raw material is written to workspace files under unique, timestamped paths first:
 
 ```ts
 const rawFile        = await client.createFile(workspace.id, rawPath, 'application/json', /* page read */);
@@ -280,7 +309,7 @@ const screenshot     = await client.screenshotPage(session.id, vendor, true);
 const screenshotFile = await client.createFile(workspace.id, shotPath, 'image/png', screenshot.image_base64);
 ```
 
-Only then is the structured observation assembled, with the file IDs baked into its provenance:
+Only then is the observation assembled, with the file IDs in its provenance:
 
 ```json
 {
@@ -302,16 +331,15 @@ Only then is the structured observation assembled, with the file IDs baked into 
 }
 ```
 
-Every value in that document is traceable to a file you can download and look at.
+Every value in that document traces to a file you can download.
 
-**A boundary worth knowing:** Agentstead's activity events intentionally *omit* page-read text and
-email bodies. Activity is a trigger stream and an audit trail, not a content store. So the division
-of labour is: activity tells you *that* something happened, the orchestrator captures *what* was
-seen, workspace files hold the raw proof, and the graph gets the structured copy.
+Agentstead activity events intentionally omit page-read text and email bodies. Activity is a trigger
+stream and an audit trail, not a content store. The division of labour is: activity records that
+something happened, the orchestrator captures what was seen, workspace files hold the raw proof, and
+the graph receives the structured copy.
 
-The audit trail is genuinely useful on its own. Here is a real activity stream from a workspace
-whose mailbox provisioning failed — you can see exactly which component broke and which one was
-fine, without reading a single application log:
+The audit trail is useful on its own. This is a real activity stream from a workspace whose mailbox
+provisioning failed, which identifies the broken component without reading application logs:
 
 ```json
 {"type":"workspace.created",             "data":{"status":"provisioning"}}
@@ -321,14 +349,9 @@ fine, without reading a single application log:
 {"type":"mailbox.failed",                "data":{"error_code":"permission_denied","provider":"agentmail"}}
 ```
 
-Finally, the observation is appended to a local JSONL ledger *and* sent to the graph. The ledger is
-append-only and is always written first; the graph is a consumer, not the system of record.
+### Step 6: Send the Observation to Zep
 
----
-
-## Part 6 — Handing it to a temporal graph
-
-The Zep sink declares an ontology before it writes anything:
+Declare the ontology before writing anything:
 
 ```ts
 const entityTypes = {
@@ -351,30 +374,28 @@ const edgeTypes = {
 };
 ```
 
-> **Gotcha.** Zep reserves a set of field names — `name`, `summary`, `created_at`, `uuid`,
-> `group_id` and friends. Declaring an entity field called `name` fails with
-> `name cannot use a reserved name`. Hence `company_name`, `plan_name`, `feature_name`.
+Zep reserves a set of field names, including `name`, `summary`, `created_at`, `uuid`, and
+`group_id`. Declaring an entity field called `name` fails with `name cannot use a reserved name`.
+That is why the fields are `company_name`, `plan_name`, and `feature_name`.
 
-Ingestion is one call, and the only critical argument is the timestamp:
+Ingestion is one call. The critical argument is the timestamp:
 
 ```ts
 await this.client.graph.add({
-  graphId: this.graphId,               // = the Agentstead workspace ID
+  graphId: this.graphId,               // the Agentstead workspace ID
   type: 'json',
   data: JSON.stringify(observation),
-  createdAt: observation.observed_at,  // when it was TRUE, not when we uploaded it
+  createdAt: observation.observed_at,  // when the fact was true, not when it was uploaded
   sourceDescription: 'Authenticated Acme Cloud pricing dashboard observation',
   metadata: { pricing_version, evidence_file_id, screenshot_file_id, /* ... */ },
 });
 ```
 
-Using the Agentstead workspace ID as the graph namespace is a small decision with a nice property:
-one durable research agent, one graph, and every fact in it is attributable to evidence files that
-live in the same workspace.
+Using the workspace ID as the graph namespace gives one durable research agent one graph, with every
+fact attributable to evidence files in the same workspace.
 
-Extraction is asynchronous. Immediately after `graph.add` returns, a search may show nothing but an
-unprocessed episode, so the CLI polls for the facts it expects and degrades gracefully instead of
-lying:
+Extraction is asynchronous. Immediately after `graph.add` returns, a search may show only an
+unprocessed episode, so the CLI polls for the facts it expects and degrades explicitly:
 
 ```ts
 try {
@@ -386,55 +407,83 @@ try {
 }
 ```
 
-Match on plan name and price *amount*, not on an exact sentence. Zep writes facts in natural
-language, and `The Pro plan costs $49 per month.` is a generated string, not a template you control:
+Match on plan name and price amount, not on an exact sentence. Zep writes facts in generated natural
+language, so `The Pro plan costs $49 per month.` is not a template you control:
 
 ```ts
 facts.some((fact) => fact.includes(planText) && fact.includes(amountText));
 ```
 
----
-
-## Part 7 — Change the world, then come back
-
-Now the vendor changes its mind:
+### Step 7: Change the Vendor's Pricing
 
 ```bash
 npm run flip -- v2
 ```
 
-Notice what does *not* change. The public page still says the same thing it said before:
+Output:
 
-![Acme Cloud public pricing page, unchanged after the flip](./images/vendor-pricing-v2.png)
+```json
+{"version":"v2","catalog":{"version":"v2","plans":{"starter":{"name":"Starter","monthlyPrice":19,
+"seatLimit":3,"features":["Shared workspace","Email support"]},"pro":{"name":"Pro","monthlyPrice":69,
+"seatLimit":10,"features":["SSO","Audit log","SCIM"]}}}}
+```
 
-Still "Starting at $49/month". A public-page crawler would report *no change at all*. This is the
-entire reason the authenticated path exists.
+The public page does not change:
 
-The agent observes again. Between the two observations the browser session was **closed** — the
-first run ends with `closeBrowser(session.id)` in a `finally` block. The second run opens a brand
-new session against the same durable profile, checks `/account`, finds itself already
-authenticated, and skips signup entirely:
+![Acme Cloud public pricing page after the flip](./images/vendor-pricing-v2.png)
+
+It still reads "Starting at $49/month". A public-page crawler reports no change at all. This is the
+reason the authenticated path exists.
+
+### Step 8: Observe Again in a New Browser Session
+
+```bash
+npm run observe
+```
+
+Between the two observations the browser session was closed; the first run ends with
+`closeBrowser(session.id)` in a `finally` block. The second run opens a new session against the same
+durable profile, checks `/account`, finds itself authenticated, and skips signup:
 
 ```ts
 const accountPage = await client.navigatePage(session.id, `${vendor}/account`);
 const accountRead = await client.readPage(session.id, ['#authenticated'], vendor);
 loggedIn = accountRead.selectors.some((s) => s.selector === '#authenticated' && s.found);
-// -> true, in a new session, with no second signup, no second credential, no second email
 ```
 
-That is continuity: not a cookie jar the orchestrator is babysitting, but an identity the agent can
-return to. It reads the dashboard again:
+Output:
+
+```
+Agentstead workspace 60bc65ca-e0f5-49c8-b505-02d6360d32c9 (poisedresource475@agentstead.sh)
+Observed v2; evidence 185d1e37-06df-4b7e-ad35-3eb8ce495253; screenshot 4bec7261-8366-4e90-b4ff-8803f9bfa4fe
+```
+
+No second signup, no second credential, no second verification email. The activity stream for that
+session shows `/account` returning `Acme Cloud account` with `#authenticated` found, then
+`/dashboard`. The agent reads the updated dashboard:
 
 ![Authenticated dashboard, v2](./images/v2-authenticated-dashboard.png)
 
-`$69/month`, `10 seats`, `SCIM` — and a second evidence pair filed in the same workspace.
+`$69/month`, `10 seats`, `SCIM`, and a second evidence pair filed in the same workspace.
 
----
+### Step 9: Ask What Changed
 
-## Part 8 — The payoff: a fact that dies with a timestamp
+```bash
+npm run diff
+```
 
-Here is the whole point of using a temporal graph rather than a key-value store. The old price is
-not overwritten. It is still there, marked dead, with the moment it stopped being true:
+Output (evidence IDs are from the repeat run described below):
+
+```
+Acme Starter Plan ──costs──> $19/month  valid 2026-08-16 → present
+  seats: 3; features: Shared workspace, Email support; evidence: d1c0865d-…, screenshot: 8dc23c0c-…
+Acme Pro Plan ──costs──> $49/month  valid 2026-08-16 → 2026-08-16
+  seats: 5; features: SSO, Audit log; evidence: d1c0865d-…, screenshot: 8dc23c0c-…
+Acme Pro Plan ──costs──> $69/month  valid 2026-08-16 → present
+  seats: 10; features: SSO, Audit log, SCIM; evidence: 185d1e37-…, screenshot: 4bec7261-…
+```
+
+That view is computed from the ledger. The graph holds the same change as temporal edges:
 
 ```text
 Pro –HAS_PRICE→ $49   "The Pro plan costs $49 per month."
@@ -446,165 +495,131 @@ Pro –HAS_PRICE→ $69   "The Pro plan costs $69 per month."
                       invalidAt —
 ```
 
-Nothing in the orchestrator computed that invalidation. It sent two timestamped observations; Zep
-worked out that the second superseded the first.
+The orchestrator did not compute that invalidation. It sent two timestamped observations and Zep
+determined that the second superseded the first.
 
-The repository includes a small static viewer (`npm run graph:view`) that renders a frozen capture
-of the live graph. Superseded edges are drawn grey and dashed, current edges solid:
+### Step 10: View the Graph
+
+```bash
+npm run graph:view
+```
+
+The viewer is a static page generated from a frozen capture of the live graph, not a live query UI.
+Superseded edges are grey and dashed; current edges are solid:
 
 ![The Living Vendor Graph viewer](./images/graph-viewer-full.png)
 
-Clicking the dead `$49` edge resolves the episode it came from and shows the provenance — the
-authenticated URL, the workspace, both evidence file IDs, and the screenshot the agent took at the
-moment the fact was true:
+Clicking the dead `$49` edge resolves the episode it came from and shows the provenance: the
+authenticated URL, the workspace ID, both evidence file IDs, and the screenshot taken while the fact
+was true.
 
 ![Clicking the superseded $49 edge](./images/graph-viewer-superseded-49.png)
 
-The renderer's temporal styling is driven directly off the graph's own validity interval, which is
-about as much code as it should be:
+The temporal styling reads directly off the graph's validity interval:
 
 ```ts
 { dead: edge.invalidAt ? 'true' : 'false' }
 // edge[dead = "true"] -> grey, dashed, faded
 ```
 
-That is the visual payoff promised at the start: `Acme Pro Plan ──costs──> $49/month` valid for
-sixteen seconds of demo time, then `$69/month` valid to the present, and one click away from the
-screenshot of the account page that proves it.
+## Running It Twice: What Extraction Does Not Guarantee
 
----
+In the run shown above, both observations recorded the seat limit correctly. The v2 evidence file
+contains `"seat_limit": 10` and the screenshot reads `10 seats`. Zep's extraction produced a
+`HAS_SEAT_LIMIT` edge only for `5` and never created the `10` edge, so that fact was never
+superseded. Price and pricing version were invalidated correctly; the seat limit was not.
 
-## Run it twice: what the graph does and does not guarantee
-
-Being honest about a live run is more useful than a clean fiction, and running the identical
-sequence twice is where the interesting caveat lives.
-
-In the run shown above, both observations recorded the seat limit correctly — the v2 evidence file
-plainly contains `"seat_limit": 10`, and the screenshot says `10 seats`. But Zep's extraction
-produced a `HAS_SEAT_LIMIT` edge only for `5`, and never created the `10` edge, so that fact was
-never superseded. Price and pricing version were invalidated correctly; the seat limit was not.
-
-So I ran the whole thing again — same code, same target, same two-observation sequence, a different
-workspace and a fresh graph. This time the extractor made *different* choices:
+Running the identical sequence again, with the same code and the same target but a different
+workspace and a fresh graph, produced a different result:
 
 ```text
 Pro –HAS_PRICE→ $49         invalidAt 2026-08-16T03:17:41Z   (superseded, as before)
 Pro –HAS_PRICE→ $69         current
-Pro –HAS_SEAT_LIMIT→ 10     current      <- appeared this time
-                                         <- and no HAS_SEAT_LIMIT→5 edge was created at all
+Pro –HAS_SEAT_LIMIT→ 10     current      <- created this time
+                                         <- no HAS_SEAT_LIMIT→5 edge was created at all
 Starter –HAS_SEAT_LIMIT→ 3  current      <- also new; absent from the first run
 ```
 
-The second run also produced a duplicate, partly mislabelled version edge: alongside the correct
+The second run also produced a duplicate, partly mislabelled version edge. Alongside the correct
 `PRICING_VERSION → v1` (invalidated at `03:17:41Z`), it created a `HAS_PRICING_VERSION` edge whose
 target node is `v1` but whose fact text reads "Acme Cloud uses pricing version v2."
 
-Two runs, identical structured input, two different graphs. That is the property to design around:
-what gets promoted from an episode to an edge is not guaranteed to be exhaustive or stable, even
-when the episode payload is complete, typed, and unambiguous. A declared ontology biases extraction;
-it does not make it deterministic.
+Two runs, identical structured input, two different graphs. Plan for this: what gets promoted from
+an episode to an edge is not guaranteed to be exhaustive or stable, even when the payload is
+complete, typed, and unambiguous. A declared ontology biases extraction; it does not make it
+deterministic.
 
-What *is* deterministic is the layer underneath. The CLI's `diff` is computed from the append-only
-ledger, not from the graph, so it reads the same both times:
+The layer underneath is deterministic. `diff` is computed from the append-only ledger rather than
+the graph, so it reads the same both times. That is the practical argument for keeping evidence and
+graph separate: the graph is a queryable, semantic, temporal view, and the ledger plus workspace
+files are the record. A missing edge is a re-extraction problem, not lost data. If your application
+depends on a specific fact being present, assert on it and re-ingest.
 
-```text
-Acme Starter Plan ──costs──> $19/month  valid 2026-08-16 → present
-  seats: 3; features: Shared workspace, Email support; evidence: d1c0865d-…, screenshot: 8dc23c0c-…
-Acme Pro Plan ──costs──> $49/month  valid 2026-08-16 → 2026-08-16
-  seats: 5; features: SSO, Audit log; evidence: d1c0865d-…, screenshot: 8dc23c0c-…
-Acme Pro Plan ──costs──> $69/month  valid 2026-08-16 → present
-  seats: 10; features: SSO, Audit log, SCIM; evidence: 185d1e37-…, screenshot: 4bec7261-…
-```
+## Known Failure Modes
 
-That is the practical argument for keeping evidence and graph as separate layers. The graph is a
-queryable, semantic, temporal *view*; the ledger and the workspace files are the record. A missing
-edge is a re-extraction problem, not lost data. If your application depends on a specific fact
-being present, assert on it and re-ingest rather than trusting that a clean payload yields a clean
-edge.
+Each of these cost real debugging time during the build.
 
-Three other failures from this build are worth passing on, because each cost real debugging time
-and none of them is in anyone's docs:
-
-* **Workspace names become mailbox display names.** Naming a workspace
-  `Living Vendor Graph 2026-08-16T02:22:18.501Z` caused every mailbox provisioning attempt to fail,
+- **Workspace names become mailbox display names.** Naming a workspace
+  `Living Vendor Graph 2026-08-16T02:22:18.501Z` made every mailbox provisioning attempt fail,
   because AgentMail rejects `:` in a display name. The workspace still came up with a working
-  browser profile and a `@workspaces.invalid` address, so the failure surfaced much later as a
-  confusing signup bug. `Date.now()` instead of `toISOString()` fixed it.
-* **"Wait for mail" needs an explicit lower bound, not a lookback window.** The second run signed up
-  again in a workspace whose inbox already held a verification email from ~50 minutes earlier. The
-  wait was called with a 30-second `lookback_ms`, and it returned the *stale* message anyway; the
-  agent dutifully navigated a dead token and landed on "Invalid link", then failed on an
-  unauthenticated dashboard several steps later. Reproduced directly against the API: with
-  `lookback_ms: 30000` and no `since`, the wait resolves with a message timestamped 50 minutes ago;
-  with an explicit `since`, it correctly times out. The fix is to capture a boundary before
-  submitting the form and pass it through — and to reject a message older than that boundary
-  instead of trusting the link:
+  browser profile and a `@workspaces.invalid` address, so the failure surfaced later as a confusing
+  signup bug. Use `Date.now()` rather than `toISOString()`.
+- **A lookback window is not a lower bound.** A repeat run signed up in a workspace whose inbox
+  already held a verification email from about 50 minutes earlier. The wait was called with
+  `lookback_ms: 30000` and returned the stale message anyway. The agent navigated a dead token,
+  landed on "Invalid link", and failed several steps later on an unauthenticated dashboard.
+  Reproduced against the API: with `lookback_ms: 30000` and no `since`, the wait resolves with a
+  message timestamped 50 minutes earlier; with an explicit `since`, it times out correctly. Pass
+  `since` and reject a message older than that boundary.
+- **Stored credentials can outlive the account.** The target's user store does not survive a
+  redeploy, so a credential in the vault kept pointing at an account that no longer existed. Verify
+  authentication after login and fall back to signup once instead of proceeding to a dashboard read
+  that cannot succeed.
+- **Report the real failure.** Reading an unauthenticated page with dashboard selectors originally
+  reported `missing usable #pricing-version`, which blames the page shape for an auth problem. Check
+  for the unauthenticated page first and say so.
+- **Do not guess an SDK's response shape.** The first version of the renderer expected fields named
+  `observations`, `startAt`, and `endAt`. The live response uses `edges[].fact`, `validAt`,
+  `invalidAt`, and `episode_reference_time`. One real call settles it.
 
-  ```ts
-  const mailSince = Date.now() - 5_000;                     // small clock-skew allowance
-  await client.fillCredential(sessionId, credential.id, [...], '#signup-submit');
-  const mail = await client.waitForMail(workspaceId, {
-    subjectContains: 'Acme Cloud verification',
-    since: mailSince,
-    timeoutMs: 120_000,
-  });
-  if (mail.message !== null && !isFreshMessage(mail.message.timestamp, mailSince)) {
-    throw new Error('Verification email was older than the signup boundary');
-  }
-  ```
+## Reference
 
-  Any long-lived agent identity hits this eventually. A durable mailbox accumulates history, and
-  "the most recent email matching this subject" is not the same question as "the email caused by the
-  action I just took."
-* **Guessing an SDK's response shape is a waste of an afternoon.** The first version of the
-  renderer expected fields like `observations`, `startAt`, and `endAt`. The live response uses
-  `edges[].fact`, `validAt`, `invalidAt`, and `episode_reference_time`. One real call answers a
-  question that no amount of careful reasoning will.
-
----
-
-## Run it yourself
+Commands:
 
 ```bash
-git clone https://github.com/thenoahhein/ontology-graph-demo
-cd ontology-graph-demo && npm install && npm run build
-
-# Terminal 1 — the target
-npm start
-
-# Terminal 2 — the agent
-export AGENTSTEAD_API_KEY=...      # durable identity, browser, mailbox, credentials, files
-export ZEP_API_KEY=...             # temporal graph
-export SIGNUP_SHARED_SECRET=...    # the target's signup guard
-export ADMIN_SECRET=...            # lets you play the vendor
-export VENDOR_BASE_URL=https://your-target.example
-
-npm run observe      # signup -> verify -> authenticated read -> evidence -> graph
-npm run flip -- v2   # the vendor changes its mind
-npm run observe      # new session, same identity, still logged in
-npm run diff         # temporal edge story with provenance
-npm run graph:view   # render the graph to docs/graph-viewer.html
+npm start            # run the vendor target locally
+npm run observe      # signup or login, authenticated read, evidence, ledger, graph
+npm run flip -- v2   # switch the target's pricing version
+npm run diff         # temporal edge story with provenance, from the ledger
+npm run graph:view   # regenerate docs/graph-viewer.html from a capture
+npm run demo         # observe, flip, observe, diff
 ```
 
-`npm run demo` runs the whole sequence. Without a `ZEP_API_KEY` the local JSONL sink is selected
-automatically, so the full flow still works offline apart from the graph.
+Environment:
 
----
+| Variable | Used by | Purpose |
+| --- | --- | --- |
+| `AGENTSTEAD_API_KEY` | orchestrator | Workspace identity, browser, mailbox, credentials, files |
+| `ZEP_API_KEY` | orchestrator | Temporal graph; omit to use the local JSONL sink |
+| `VENDOR_BASE_URL` | orchestrator | The target to observe |
+| `SIGNUP_SHARED_SECRET` | both | Guards the target's signup route |
+| `ADMIN_SECRET` | both | Guards the pricing-version endpoint |
+| `AGENTMAIL_API_KEY` | target | Sends verification mail |
 
-## The takeaway
+`npm run demo` runs the full sequence. Without `ZEP_API_KEY` the local JSONL sink is selected
+automatically, so everything except the graph works offline. Local setup is documented in
+[`docs/DEMO.md`](../DEMO.md).
 
-Every piece of this is boring on its own. An Express app with two pricing versions. A REST client.
-A graph SDK. What makes it interesting is what each layer refuses to do.
+## Summary
 
-The graph does not try to own identity, sessions, or secrets. Agentstead does not try to own nodes,
-edges, or queries. The orchestrator owns neither — it just moves a well-shaped observation from a
-place that can log in to a place that can remember.
+The graph does not own identity, sessions, or secrets. Agentstead does not own nodes, edges, or
+queries. The orchestrator owns neither: it moves a well-shaped observation from a system that can
+log in to a system that can remember.
 
-> Your graph knows that a vendor offers SSO. Agentstead gives your agent the account that logged
-> in, verified the claim, noticed when it changed, and can prove it.
+A context graph can record that a vendor offers SSO. A workspace identity is what lets an agent hold
+the account that logged in, verify the claim, notice when it changed, and show the page that proves
+it.
 
----
-
-*Source: [thenoahhein/ontology-graph-demo](https://github.com/thenoahhein/ontology-graph-demo).
-Graph data in the viewer is a capture of a live Zep graph produced by the run described above;
-screenshots are the agent's own evidence files and the deployed target.*
+Source: [thenoahhein/ontology-graph-demo](https://github.com/thenoahhein/ontology-graph-demo). The
+viewer data is a capture of a live Zep graph produced by the run described above. The screenshots
+are the agent's own evidence files and the deployed target.
