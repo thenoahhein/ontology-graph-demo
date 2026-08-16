@@ -50,12 +50,8 @@ async function observe(sinkModeOverride?: SinkMode): Promise<void> {
   console.log(`Agentstead workspace ${workspace.id} (${identity.email_address})`);
   const session = await client.connectBrowser(workspace.id, { reuse: true });
   try {
-    let loggedIn = false;
-    const accountPage = await client.navigatePage(session.id, `${targetBaseUrl}/account`);
-    if (accountPage.url.startsWith(targetBaseUrl)) {
-      const accountRead = await client.readPage(session.id, ['#authenticated'], targetBaseUrl);
-      loggedIn = accountRead.selectors.some((selector) => selector.selector === '#authenticated' && selector.found);
-    }
+    let loggedIn = await isAuthenticated(session.id, targetBaseUrl);
+    let signupAttempted = false;
     let credentialId = state?.credentialId;
     if (!loggedIn) {
       const credentials = await client.listCredentials(workspace.id);
@@ -65,9 +61,22 @@ async function observe(sinkModeOverride?: SinkMode): Promise<void> {
       if (existing) {
         credentialId = existing.id;
         await login(session.id, credentialId, targetBaseUrl);
+        loggedIn = await isAuthenticated(session.id, targetBaseUrl);
+        if (!loggedIn) {
+          signupAttempted = true;
+          credentialId = await signupWithClearError(session.id, identity.email_address, workspace.id, targetBaseUrl);
+          loggedIn = await isAuthenticated(session.id, targetBaseUrl);
+        }
       } else {
-        credentialId = await signup(session.id, identity.email_address, workspace.id, targetBaseUrl);
+        signupAttempted = true;
+        credentialId = await signupWithClearError(session.id, identity.email_address, workspace.id, targetBaseUrl);
+        loggedIn = await isAuthenticated(session.id, targetBaseUrl);
       }
+    }
+    if (!loggedIn) {
+      throw new Error(signupAttempted
+        ? 'Signup failed: verification completed but vendor account is not authenticated'
+        : 'Credential login did not authenticate the vendor account');
     }
     const dashboard = await client.navigatePage(session.id, `${targetBaseUrl}/dashboard`);
     const read = await client.readPage(session.id, dashboardSelectors(), targetBaseUrl);
@@ -112,6 +121,24 @@ async function observe(sinkModeOverride?: SinkMode): Promise<void> {
   }
 }
 
+async function isAuthenticated(sessionId: string, targetBaseUrl: string): Promise<boolean> {
+  const accountPage = await client.navigatePage(sessionId, `${targetBaseUrl}/account`);
+  if (!accountPage.url.startsWith(targetBaseUrl)) return false;
+  const accountRead = await client.readPage(sessionId, ['#authenticated'], targetBaseUrl);
+  return accountRead.selectors.some((selector) => selector.selector === '#authenticated' && selector.found);
+}
+
+async function signupWithClearError(
+  sessionId: string, email: string, workspaceId: string, targetBaseUrl: string,
+): Promise<string> {
+  try {
+    return await signup(sessionId, email, workspaceId, targetBaseUrl);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Signup failed: ${message}`);
+  }
+}
+
 async function signup(sessionId: string, email: string, workspaceId: string, targetBaseUrl: string): Promise<string> {
   const signupSecret = process.env.SIGNUP_SHARED_SECRET;
   if (!signupSecret) throw new Error('SIGNUP_SHARED_SECRET is required for the signup path');
@@ -124,17 +151,27 @@ async function signup(sessionId: string, email: string, workspaceId: string, tar
     generate: true,
     secretLength: 24,
   });
+  const mailSince = Date.now() - 5_000;
   await client.fillCredential(sessionId, credential.id, [{ field: 'password', selector: '#password' }], '#signup-submit');
   await client.waitForSelector(sessionId, '#pending', 60_000, targetBaseUrl);
   const mail = await client.waitForMail(workspaceId, {
     subjectContains: 'Acme Cloud verification',
+    since: mailSince,
     timeoutMs: 120_000,
-    lookbackMs: 30_000,
   });
+  const messageTimestamp = mail.message?.timestamp;
+  if (mail.message !== null && (messageTimestamp === undefined || !isFreshMessage(messageTimestamp, mailSince))) {
+    throw new Error(`Verification email was older than signup boundary (${new Date(mailSince).toISOString()})`);
+  }
   const link = mail.extraction.links[0]?.url;
   if (!link) throw new Error(mailFailure(mail));
   await client.navigatePage(sessionId, link);
   return credential.id;
+}
+
+function isFreshMessage(timestamp: string, since: number): boolean {
+  const parsed = Date.parse(timestamp);
+  return Number.isFinite(parsed) && parsed >= since;
 }
 
 async function login(sessionId: string, credentialId: string, targetBaseUrl: string): Promise<void> {
