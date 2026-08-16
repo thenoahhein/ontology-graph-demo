@@ -110,7 +110,7 @@ generated at runtime and will differ from the examples below.
 - A Zep Cloud API key (optional; without it the run uses the local file sink)
 - An AgentMail API key for the target's outbound verification mail
 
-```
+```bash
 git clone https://github.com/thenoahhein/ontology-graph-demo
 cd ontology-graph-demo
 npm install
@@ -178,7 +178,7 @@ const identity = await client.getIdentity(workspace.id);
 
 Output:
 
-```
+```text
 Agentstead workspace 60bc65ca-e0f5-49c8-b505-02d6360d32c9 (poisedresource475@agentstead.sh)
 ```
 
@@ -453,7 +453,7 @@ loggedIn = accountRead.selectors.some((s) => s.selector === '#authenticated' && 
 
 Output:
 
-```
+```text
 Agentstead workspace 60bc65ca-e0f5-49c8-b505-02d6360d32c9 (poisedresource475@agentstead.sh)
 Observed v2; evidence 185d1e37-06df-4b7e-ad35-3eb8ce495253; screenshot 4bec7261-8366-4e90-b4ff-8803f9bfa4fe
 ```
@@ -474,7 +474,7 @@ npm run diff
 
 Output (evidence IDs are from the repeat run described below):
 
-```
+```text
 Acme Starter Plan ──costs──> $19/month  valid 2026-08-16 → present
   seats: 3; features: Shared workspace, Email support; evidence: d1c0865d-…, screenshot: 8dc23c0c-…
 Acme Pro Plan ──costs──> $49/month  valid 2026-08-16 → 2026-08-16

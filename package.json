@@ -16,7 +16,8 @@
     "flip": "node dist/orchestrator/cli.js flip",
     "diff": "node dist/orchestrator/cli.js diff",
     "demo": "node dist/orchestrator/cli.js demo",
-    "graph:view": "node dist/graph-viewer/generate.js"
+    "graph:view": "node dist/graph-viewer/generate.js",
+    "blog:view": "node dist/blog/generate.js"
   },
   "dependencies": {
     "@getzep/zep-cloud": "3.26.0",
@@ -24,7 +25,10 @@
   },
   "devDependencies": {
     "@types/express": "4.17.21",
+    "@types/markdown-it": "14.1.2",
     "@types/node": "22.10.2",
+    "highlight.js": "11.11.1",
+    "markdown-it": "14.1.0",
     "tsx": "4.19.2",
     "typescript": "5.7.2"
   }
