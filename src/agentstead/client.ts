@@ -32,7 +32,9 @@ export interface MailLink {
 export interface MailExtraction {
   codes: Array<{ value: string; confidence: string; kind: string }>; links: MailLink[];
 }
-export interface MailMessage { message_id: string; from: string; subject: string; text: string; }
+export interface MailMessage {
+  message_id: string; from: string; subject: string; text: string; timestamp: string;
+}
 export interface MailWaitResult {
   message: MailMessage | null; extraction: MailExtraction; timed_out: boolean;
   source: 'activity_event' | 'provider_poll' | null; diagnostics: unknown;

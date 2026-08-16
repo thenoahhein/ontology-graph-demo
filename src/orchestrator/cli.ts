@@ -124,17 +124,27 @@ async function signup(sessionId: string, email: string, workspaceId: string, tar
     generate: true,
     secretLength: 24,
   });
+  const mailSince = Date.now() - 5_000;
   await client.fillCredential(sessionId, credential.id, [{ field: 'password', selector: '#password' }], '#signup-submit');
   await client.waitForSelector(sessionId, '#pending', 60_000, targetBaseUrl);
   const mail = await client.waitForMail(workspaceId, {
     subjectContains: 'Acme Cloud verification',
+    since: mailSince,
     timeoutMs: 120_000,
-    lookbackMs: 30_000,
   });
+  const messageTimestamp = mail.message?.timestamp;
+  if (mail.message !== null && (messageTimestamp === undefined || !isFreshMessage(messageTimestamp, mailSince))) {
+    throw new Error(`Verification email was older than signup boundary (${new Date(mailSince).toISOString()})`);
+  }
   const link = mail.extraction.links[0]?.url;
   if (!link) throw new Error(mailFailure(mail));
   await client.navigatePage(sessionId, link);
   return credential.id;
+}
+
+function isFreshMessage(timestamp: string, since: number): boolean {
+  const parsed = Date.parse(timestamp);
+  return Number.isFinite(parsed) && parsed >= since;
 }
 
 async function login(sessionId: string, credentialId: string, targetBaseUrl: string): Promise<void> {
